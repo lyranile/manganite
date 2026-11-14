@@ -24,11 +24,11 @@ install -Dm644 "${TEMPLATE_DIR}/profile.conf" "${PROFILE_DIR}/manganite.conf"
 # Interactive Kickstart: install the bootc container image
 mkdir -p "${ANACONDA_DIR}" "${POST_DIR}"
 sed -e "s|\${IMAGE_REF}|${IMAGE_REF}|g" -e "s|\${IMAGE_TAG}|${IMAGE_TAG}|g" \
-    "${TEMPLATE_DIR}/interactive-defaults.ks.tmpl" > "${ANACONDA_DIR}/interactive-defaults.ks"
+	"${TEMPLATE_DIR}/interactive-defaults.ks.tmpl" >"${ANACONDA_DIR}/interactive-defaults.ks"
 
 # Post-install: switch to the published image
 sed -e "s|\${IMAGE_REF}|${IMAGE_REF}|g" -e "s|\${IMAGE_TAG}|${IMAGE_TAG}|g" \
-    "${TEMPLATE_DIR}/install-configure-upgrade.ks.tmpl" > "${POST_DIR}/install-configure-upgrade.ks"
+	"${TEMPLATE_DIR}/install-configure-upgrade.ks.tmpl" >"${POST_DIR}/install-configure-upgrade.ks"
 
 # Post-install: copy flatpaks into the deployed system
 install -Dm644 "${TEMPLATE_DIR}/install-flatpaks.ks" "${POST_DIR}/install-flatpaks.ks"

@@ -7,7 +7,7 @@ set -eoux pipefail
 systemd-sysusers
 
 # Ensure zsh is a valid login shell
-grep -q '^/usr/bin/zsh$' /etc/shells || echo '/usr/bin/zsh' >> /etc/shells
+grep -q '^/usr/bin/zsh$' /etc/shells || echo '/usr/bin/zsh' >>/etc/shells
 
 usermod -s /usr/bin/zsh root
 if [ -f /etc/default/useradd ]; then
@@ -18,7 +18,7 @@ fi
 # Optional test user for local VM testing (disabled in production)
 if [[ "${LIVE_USER:-false}" == "true" ]]; then
 	mkdir -p /usr/lib/sysusers.d
-	echo 'u liveuser 1000:1000 "Live User" /home/liveuser /usr/bin/zsh' > /usr/lib/sysusers.d/99-liveuser-test.conf
+	echo 'u liveuser 1000:1000 "Live User" /home/liveuser /usr/bin/zsh' >/usr/lib/sysusers.d/99-liveuser-test.conf
 	systemd-sysusers
 	if ! id liveuser >/dev/null 2>&1; then
 		useradd -m -s /usr/bin/zsh liveuser

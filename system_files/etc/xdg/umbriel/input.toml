@@ -1,5 +1,4 @@
 # Umbriel input & keybinds configuration
-# Split from config.toml
 
 [input.keyboard]
 numlock_toggle = true

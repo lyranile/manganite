@@ -58,6 +58,7 @@ jobs:
           sudo podman build \
             --cap-add sys_admin \
             --security-opt label=disable \
+            --build-context containers-storage=/var/lib/containers/storage \
             --build-arg BASE_IMAGE=${IMAGE_REF}:latest \
             --tag "${CONTAINER_IMAGE_NAME}" \
             -f iso/Containerfile \

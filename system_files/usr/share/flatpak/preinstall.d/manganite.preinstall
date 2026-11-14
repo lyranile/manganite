@@ -10,7 +10,7 @@ IsRuntime=false
 Branch=stable
 IsRuntime=false
 
-[Flatpak Preinstall net.waterfox.waterfox]
+[Flatpak Preinstall org.mozilla.firefox]
 Branch=stable
 IsRuntime=false
 

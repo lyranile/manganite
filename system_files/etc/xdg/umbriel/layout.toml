@@ -1,5 +1,4 @@
 # Umbriel layout, rules & hot corners configuration
-# Split from config.toml
 
 [layout]
 # mode = "scrolling" # "scrolling", "dwindle", "master", or "floating".

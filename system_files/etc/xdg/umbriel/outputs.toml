@@ -1,5 +1,4 @@
 # Umbriel outputs configuration
-# Split from config.toml
 
 [output.DP-2]
 mode = "2560x1440@144"

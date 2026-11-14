@@ -1,5 +1,4 @@
 # Noctalia bar configuration
-# Split from config.toml
 
 [bar.default]
 shadow = false

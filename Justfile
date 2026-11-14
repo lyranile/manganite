@@ -18,6 +18,10 @@ iso_containerfile := "iso/Containerfile"
 # Container storage location for bind-mounting into the ISO build container.
 containers_storage := if `id -u` == "0" { "/var/lib/containers/storage" } else { env("HOME") + "/.local/share/containers/storage" }
 
+# VM run defaults
+vm_host := "127.0.0.1"
+vm_port := "8006"
+qemu_image := "docker.io/qemux/qemu"
 alias build-vm := build-qcow2
 alias rebuild-vm := rebuild-qcow2
 alias run-vm := run-vm-qcow2
@@ -429,18 +433,21 @@ _run-vm $target_image $tag $type $config:
     fi
 
     # Determine an available port to use
-    port=9000
-    while grep -q :${port} <<< $(ss -tunalp); do
+    vm_host={{ vm_host }}
+    port={{ vm_port }}
+    while grep -q ":${port}" <<< $(ss -tunalp); do
         port=$(( port + 1 ))
     done
     echo "Using Port: ${port}"
-    echo "Connect to http://localhost:${port}"
+    echo "Connect to http://${vm_host}:${port}"
+
+    qemu_image={{ qemu_image }}
 
     # Set up the arguments for running the VM
     run_args=()
     run_args+=(--rm --privileged)
     run_args+=(--pull=newer)
-    run_args+=(--publish "127.0.0.1:${port}:8006")
+    run_args+=(--publish "${vm_host}:${port}:8006")
     run_args+=(--env "CPU_CORES=4")
     run_args+=(--env "RAM_SIZE=8G")
     run_args+=(--env "DISK_SIZE=64G")
@@ -448,7 +455,7 @@ _run-vm $target_image $tag $type $config:
     run_args+=(--env "GPU=Y")
     run_args+=(--device=/dev/kvm)
     run_args+=(--volume "${PWD}/${image_file}":"/boot.${type}":Z)
-    run_args+=(docker.io/qemux/qemu)
+    run_args+=(${qemu_image})
 
     # Run the VM and open the browser to connect
     (sleep 30 && xdg-open http://localhost:"$port") &
@@ -471,14 +478,16 @@ run-vm-iso $target_image=("localhost/" + image_name) $tag=default_tag:
     if [[ ! -f "${image_file}" ]]; then
         just build-iso ${target_image} ${tag}
     fi
-    port=8006
-    while grep -q :${port} <<< $(ss -tunalp); do port=$(( port + 1 )); done
+    vm_host={{ vm_host }}
+    port={{ vm_port }}
+    qemu_image={{ qemu_image }}
+    while grep -q ":${port}" <<< $(ss -tunalp); do port=$(( port + 1 )); done
     echo "Using Port: ${port}"
-    podman run --rm --privileged --pull=newer --publish "127.0.0.1:${port}:8006" \
+    podman run --rm --privileged --pull=newer --publish "${vm_host}:${port}:8006" \
         --env "CPU_CORES=4" --env "RAM_SIZE=8G" --env "DISK_SIZE=64G" \
         --env "TPM=Y" --env "GPU=Y" --device=/dev/kvm \
         --volume "${PWD}/${image_file}":"/boot.iso":Z \
-        docker.io/qemux/qemu
+        ${qemu_image}
 
 # Run a virtual machine using systemd-vmspawn
 [group('Run Virtal Machine')]

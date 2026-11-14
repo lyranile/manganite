@@ -1,5 +1,4 @@
 # Umbriel appearance configuration
-# Split from config.toml
 
 [appearance.blur]
 radius = 3
@@ -8,7 +7,7 @@ radius = 3
 [appearance.title_bar]
 mode = "forced"  # Always show title bars with buttons.
 # Use "forced" to always show bars, or "off" to hide them. Window rules can override this.
-height = 48
+height = 32
 font = "sans 12"
 button_position = "right"  # or "left"
 buttons = ["minimize", "maximize", "close"]  # From the title outward; omit to hide.

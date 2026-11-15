@@ -319,15 +319,14 @@ _build-bib $target_image $tag $type $config: (_rootful_load_image target_image t
         --pull=newer \
         --net=host \
         --security-opt label=type:unconfined_t \
+        -v "$(pwd)/${config}":/config.toml:ro \
         -v $BUILDTMP:/output \
         -v /var/lib/containers/storage:/var/lib/containers/storage \
-        ghcr.io/osbuild/image-builder-cli:latest \
-        build \
-        --output-dir /output \
-        --output-name "${target_image##*/}" \
-        --bootc-ref "${target_image}:${tag}" \
-        --bootc-default-fs btrfs \
-        generic-iso
+        quay.io/centos-bootc/bootc-image-builder:latest \
+        --type iso \
+        --rootfs btrfs \
+        --use-librepo=True \
+        "${target_image}:${tag}"
     else
       args="--type ${type} "
       args+="--use-librepo=True "
@@ -374,7 +373,7 @@ build-raw $target_image=("localhost/" + image_name) $tag=default_tag: && (_build
 
 # Build an installer ISO (bootc generic-iso) via Bootc Image Builder
 [group('Build Virtal Machine Image')]
-build-installer-iso $target_image=("localhost/" + image_name) $tag=default_tag: && (_build-bib target_image tag "iso" "disk_config/disk.toml")
+build-installer-iso $target_image=("localhost/" + image_name) $tag=default_tag: && (_build-bib target_image tag "iso" "disk_config/iso.toml")
 
 # Rebuild a QCOW2 virtual machine image
 [group('Build Virtal Machine Image')]

@@ -30,7 +30,7 @@ Manganite's mission is to provide a small, reliable, and hackable desktop operat
 
 ### Installation
 
-The easiest way to try Manganite is to install from a disk image produced by the [`build-disk.yml`](./.github/workflows/build-disk.yml) workflow. Trigger that workflow (or download the artifact from the latest run) to get an `anaconda-iso` installer, then boot it and follow the Anaconda installer. The installer switches the target system to `ghcr.io/lyranile/manganite:latest` in place.
+The easiest way to try Manganite is to install from a disk image produced by the [`build-disk.yml`](./.github/workflows/build-disk.yml) workflow. Trigger that workflow (or download the artifact from the latest run) to get an installer ISO, then boot it and follow the installer. The installer switches the target system to `ghcr.io/lyranile/manganite:latest` in place.
 
 > **Note:** A hosted ISO download link and a project website are not published yet. See [Information needed](#information-needed) below.
 
@@ -194,7 +194,7 @@ All incorporated components maintain their respective licenses and attributions.
 
 The following are not yet available and are needed to finish the public-facing documentation. Please provide them and I'll wire them in:
 
-- **ISO download link** — a hosted URL for the `anaconda-iso` produced by `build-disk.yml` (or confirmation to use GitHub Actions artifacts only).
+- **ISO download link** — a hosted URL for the installer ISO produced by `build-disk.yml` (or confirmation to use GitHub Actions artifacts only).
 - **Project website** — if one exists (e.g. `getmanganite.dev`), for an install/scene picker like Aurora/Bluefin.
 - **Screenshots / hero image** — a desktop screenshot for the README and docs.
 - **Cosign public key hosting** — confirmation that `cosign.pub` stays in-repo (already present) is sufficient.

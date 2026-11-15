@@ -1,7 +1,0 @@
-[org.gnome.desktop.interface]
-icon-theme='Papirus'
-cursor-theme='Bibata-Modern-Ice'
-gtk-theme='Adwaita'
-
-[org.gnome.desktop.wm.preferences]
-button-layout=''

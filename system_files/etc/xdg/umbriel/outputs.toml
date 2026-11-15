@@ -1,5 +1,3 @@
-# Umbriel outputs configuration
-
 [output.DP-2]
 mode = "2560x1440@144"
 position = [0, 0]
@@ -22,7 +20,6 @@ focus_at_startup = false
 workspace_axis = "horizontal"
 # sdr_transfer = "gamma22" # Or "srgb" for piecewise SDR decoding in HDR.
 
-# ==============================================================================
 # Appearance
 # Blur uses a smaller radius than the built-in default.
 # https://docs.noctalia.dev/umbriel/appearance/

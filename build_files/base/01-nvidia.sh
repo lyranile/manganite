@@ -6,6 +6,7 @@ set -eoux pipefail
 
 if [ "${NVIDIA_VARIANT:-open}" != "none" ]; then
 	dnf5 -y install /tmp/akmods-rpms/*.rpm
+	dnf5 -y install libva-nvidia-driver
 
 	dnf5 config-manager setopt fedora-multimedia.enabled=1
 	dnf5 config-manager setopt fedora-multimedia.priority=90

@@ -1,5 +1,3 @@
-# Noctalia bar configuration
-
 [bar.default]
 shadow = false
 contact_shadow = false

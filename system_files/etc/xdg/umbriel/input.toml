@@ -1,5 +1,3 @@
-# Umbriel input & keybinds configuration
-
 [input.keyboard]
 numlock_toggle = true
 layout = "us"
@@ -24,7 +22,6 @@ accel_profile = "flat"
 # enabled = true
 # map_to_output = "eDP-1"
 
-# ==============================================================================
 # Keybinds
 # Defining this table replaces the built-in bind set, so every active bind that
 # should remain available is listed here.
@@ -160,7 +157,6 @@ accel_profile = "flat"
 "submap[alttab],Return" = { action = "overview-close", submap = "reset", repeat = false }
 "submap[alttab],Escape" = { action = "overview-close", submap = "reset", repeat = false }
 
-# ==============================================================================
 # Layout
 # New scrolling-layout windows start at half the output width. Without this
 # setting, each application chooses its starting width. Stacked columns retain

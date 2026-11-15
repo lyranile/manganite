@@ -5,13 +5,6 @@ echo "::group:: ===$(basename "$0")==="
 set -eoux pipefail
 
 dnf5 -y install \
-	anaconda \
-	anaconda-dracut \
-	anaconda-gui \
-	anaconda-install-img-deps \
-	dracut-live \
-	dracut-network \
-	grub2-efi-x64-cdboot \
 	adw-gtk3-theme \
 	bibata-cursor-theme \
 	dracut-config-generic \

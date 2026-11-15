@@ -9,3 +9,10 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+
+  # Chunkah image pin used by the `just rechunk` recipe. The pin lives in its
+  # own Dockerfile so Dependabot can parse and bump the tag and digest.
+  - package-ecosystem: "docker"
+    directory: "/tools/chunkah"
+    schedule:
+      interval: "weekly"

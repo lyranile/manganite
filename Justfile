@@ -118,9 +118,22 @@ rechunk $target_image=image_name $tag=default_tag:
 
     set -xeuo pipefail
 
-    # TODO: pin chunkah image to hash once mature enough.
     # This makes a full copy of the image; may exhaust disk on CI runners
     # unless the base image also uses chunkah.
+    CHUNKAH_PIN_FILE="{{ justfile_directory() }}/tools/chunkah/Dockerfile"
+
+    if [[ ! -f "${CHUNKAH_PIN_FILE}" ]]; then
+        echo "Missing chunkah pin file: ${CHUNKAH_PIN_FILE}" >&2
+        exit 1
+    fi
+
+    CHUNKAH_IMAGE="$(awk '$1 == "FROM" { print $2; exit }' "${CHUNKAH_PIN_FILE}")"
+
+    if [[ -z "${CHUNKAH_IMAGE}" ]]; then
+        echo "No FROM image found in ${CHUNKAH_PIN_FILE}" >&2
+        exit 1
+    fi
+
     CHUNKAH_CONFIG_FILE="$(mktemp)"
 
     # Build in ./ (not /tmp) to avoid /tmp space limits
@@ -133,7 +146,7 @@ rechunk $target_image=image_name $tag=default_tag:
       --mount=type=image,src="${target_image}:${tag}",target=/chunkah \
       -v "${CHUNKAH_CONFIG_FILE}:/chunkah-config.json:ro,Z" \
       -v "${CHUNKAH_OUTPUT_DIR}:/run/out:Z" \
-      quay.io/coreos/chunkah:latest \
+      "${CHUNKAH_IMAGE}" \
       build \
       --verbose \
       --compressed \
@@ -257,6 +270,12 @@ _build-bib $target_image $tag $type $config: (_rootful_load_image target_image t
     set -euo pipefail
 
     BUILDTMP=$(mktemp -p "${PWD}" -d -t _build-bib.XXXXXXXXXX)
+    GPGDIR=$(mktemp -d "${PWD}/_build-bib-gpg.XXXXXXXXXX")
+    trap 'rm -rf "${GPGDIR}"' EXIT
+    sudo podman run --rm \
+      -v "${GPGDIR}":/out:Z \
+      "${target_image}:${tag}" \
+      bash -c 'cp -aL /etc/pki/rpm-gpg/. /out/ 2>/dev/null || true; cp -aL /usr/share/pki/rpm-gpg/. /out/ 2>/dev/null || true'
 
     if [[ "${type}" == "iso" ]]; then
       sudo podman run \
@@ -266,6 +285,8 @@ _build-bib $target_image $tag $type $config: (_rootful_load_image target_image t
         --pull=newer \
         --net=host \
         --security-opt label=type:unconfined_t \
+        -v "${GPGDIR}":/etc/pki/rpm-gpg:ro,Z \
+        -v "${GPGDIR}":/usr/share/pki/rpm-gpg:ro,Z \
         -v "$(pwd)/${config}":/config.toml:ro \
         -v "${BUILDTMP}":/output \
         -v /var/lib/containers/storage:/var/lib/containers/storage \
@@ -286,6 +307,8 @@ _build-bib $target_image $tag $type $config: (_rootful_load_image target_image t
         --pull=newer \
         --net=host \
         --security-opt label=type:unconfined_t \
+        -v "${GPGDIR}":/etc/pki/rpm-gpg:ro,Z \
+        -v "${GPGDIR}":/usr/share/pki/rpm-gpg:ro,Z \
         -v "$(pwd)/${config}":/config.toml:ro \
         -v "${BUILDTMP}":/output \
         -v /var/lib/containers/storage:/var/lib/containers/storage \

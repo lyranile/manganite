@@ -1,5 +1,4 @@
 # Noctalia dock configuration
-# Split from config.toml
 
 [dock]
 enabled = true
@@ -31,4 +30,4 @@ inactive_opacity = 0.85
 icon_saturation = 1.0
 launcher_position = "start"
 launcher_icon = "grid-dots"
-pinned = ["waterfox", "org.gnome.Nautilus", "ghostty", "org.gnome.Console"]
+pinned = ["com.mitchellh.ghostty", "org.mozilla.firefox", "org.gnome.Nautilus"]

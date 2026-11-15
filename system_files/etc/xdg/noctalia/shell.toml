@@ -1,5 +1,4 @@
 # Noctalia shell configuration
-# Split from config.toml
 
 [shell]
 time_format = "{:%H:%M:%S}"

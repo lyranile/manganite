@@ -10,7 +10,7 @@ IsRuntime=false
 Branch=stable
 IsRuntime=false
 
-[Flatpak Preinstall net.waterfox.waterfox]
+[Flatpak Preinstall org.mozilla.firefox]
 Branch=stable
 IsRuntime=false
 
@@ -55,5 +55,13 @@ Branch=stable
 IsRuntime=false
 
 [Flatpak Preinstall org.gnome.World.Iotas]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall org.gtk.Gtk3theme.adw-gtk3-dark]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall org.gtk.Gtk3theme.adw-gtk3]
 Branch=stable
 IsRuntime=false

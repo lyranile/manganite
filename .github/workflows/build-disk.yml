@@ -13,9 +13,9 @@ on:
     branches:
       - main
     paths:
-      - './disk_config/disk.toml'
-      - './disk_config/iso.toml'
-      - './.github/workflows/build-disk.yml'
+      - "./disk_config/disk.toml"
+      - "./disk_config/iso.toml"
+      - "./.github/workflows/build-disk.yml"
 
 env:
   IMAGE_NAME: ${{ github.event.repository.name }} # output of build.yml, keep in sync
@@ -34,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        disk-type: ["qcow2"]
+        disk-type: ["qcow2", "iso"]
     permissions:
       contents: read
       packages: read
@@ -73,14 +73,29 @@ jobs:
 
       - name: Build disk images
         id: build
-        uses: osbuild/image-builder-action@028e4d28330efe546229eb9cb52aee78174d2347 # main
-        with:
-          builder-image: ${{ env.BIB_IMAGE }}
-          config-file: './disk_config/disk.toml'
-          image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
-          chown: ${{ env.USER_UID }}:${{ env.USER_GID }}
-          types: ${{ matrix.disk-type }}
-          additional-args: --use-librepo=True
+        run: |
+          set -eoux pipefail
+          CONFIG=$(if [ "${{ matrix.disk-type }}" = "iso" ]; then echo "./disk_config/iso.toml"; else echo "./disk_config/disk.toml"; fi)
+          sudo podman pull "${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}"
+          sudo mkdir -p output
+          sudo podman run \
+            --rm \
+            -it \
+            --privileged \
+            --pull=newer \
+            --net=host \
+            --security-opt label=type:unconfined_t \
+            -v "$PWD/$CONFIG:/config.toml:ro" \
+            -v "$PWD/output:/output" \
+            -v /var/lib/containers/storage:/var/lib/containers/storage \
+            "${BIB_IMAGE}" \
+            --type ${{ matrix.disk-type }} \
+            --rootfs btrfs \
+            --use-librepo=True \
+            "${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}"
+          sudo chown -R ${USER_UID}:${USER_GID} output
+          (cd output && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
+          echo "output-directory=$(realpath output)" >> "${GITHUB_OUTPUT}"
 
       - name: Upload disk images and Checksum to Job Artifacts
         if: github.event_name != 'pull_request'

@@ -1,5 +1,3 @@
-# Umbriel layout, rules & hot corners configuration
-
 [layout]
 # mode = "scrolling" # "scrolling", "dwindle", "master", or "floating".
 gap = 4
@@ -33,7 +31,6 @@ default_extent_fraction = 1.0
 # max_tabs = 6            # show at most 6 slots; more tabs scroll
 # overflow = "scroll"      # or "shrink" to fit every tab
 
-# ==============================================================================
 # Window rules
 # Rules combine in order, with later values overriding earlier ones.
 # https://docs.noctalia.dev/umbriel/window-rules/
@@ -110,7 +107,6 @@ default_pinned = true
 # corner_radius = 0
 # shadow = false
 
-# ==============================================================================
 # Layer rules
 # https://docs.noctalia.dev/umbriel/layer-rules/
 [[layer_rule]]
@@ -126,7 +122,6 @@ blur_popups = true
 match.namespace = "^noctalia-(notification|dock|panel|attached-panel|osd)$"
 blur_optimized = false
 
-# ==============================================================================
 # Overview
 # Built-in overview and animation values are used. The top-left hot corner opens
 # the overview after a short delay.

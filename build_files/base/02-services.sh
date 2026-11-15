@@ -12,6 +12,8 @@ mv -f /usr/lib/systemd/system/flatpak-add-flathub-repos.service /usr/lib/systemd
 
 systemctl set-default graphical.target &&
 	systemctl disable getty@tty1 2>/dev/null || true
+systemctl mask rpm-ostree-countme.timer rpm-ostree-countme.service 2>/dev/null || true
+systemctl mask systemd-update-utmp.service systemd-update-utmp-shutdown.service 2>/dev/null || true
 systemctl preset-all
 systemctl --global preset-all
 systemctl enable flatpak-nuke-fedora.service flatpak-preinstall.service rpm-ostreed-automatic.timer 2>/dev/null || true

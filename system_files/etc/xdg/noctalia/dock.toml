@@ -1,5 +1,3 @@
-# Noctalia dock configuration
-
 [dock]
 enabled = true
 position = "bottom"

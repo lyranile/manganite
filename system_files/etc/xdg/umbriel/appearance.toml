@@ -1,5 +1,3 @@
-# Umbriel appearance configuration
-
 [appearance.blur]
 radius = 3
 
@@ -19,7 +17,6 @@ button_padding = 8
 # [colors]
 # backdrop = "#000000FF"
 
-# ==============================================================================
 # Effects
 # Every effect is off until a preset is selected; border and window effects
 # scale with overview zoom. Include a bundled preset (adjust /usr for the
@@ -50,7 +47,6 @@ button_padding = 8
 # [effects]
 # border = "pulse"
 
-# ==============================================================================
 # Input
 # Enable NumLock when a physical keyboard connects.
 # https://docs.noctalia.dev/umbriel/input/

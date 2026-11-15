@@ -1,5 +1,3 @@
-# Noctalia shell configuration
-
 [shell]
 time_format = "{:%H:%M:%S}"
 date_format = "%d/%m/%y"

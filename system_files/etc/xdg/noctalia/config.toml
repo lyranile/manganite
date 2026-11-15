@@ -1,11 +1,3 @@
-# Noctalia starting configuration
-#
-# Split configuration: see include section below.
-#
-
-# ==============================================================================
-# Includes
-
 [include]
 files = ["bar.toml", "dock.toml", "shell.toml", "theme.toml", "wallpaper.toml"]
 

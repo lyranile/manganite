@@ -13,11 +13,6 @@ export PODMAN := "podman"
 export BUILDAH := "buildah"
 export SUDOIF := if `id -u` == "0" { "" } else { "sudo" }
 
-iso_containerfile := "iso/Containerfile"
-
-# Container storage location for bind-mounting into the ISO build container.
-containers_storage := if `id -u` == "0" { "/var/lib/containers/storage" } else { env("HOME") + "/.local/share/containers/storage" }
-
 # VM run defaults
 vm_host := "127.0.0.1"
 vm_port := "8006"
@@ -132,7 +127,7 @@ build $target_image=image_name $tag=default_tag:
     LABELS+=("--label" "org.opencontainers.image.vendor={{ repo_organization }}")
 
     # This actually builds the image!
-    PODMAN_BUILD_ARGS=("${BUILD_ARGS[@]}" "${LABELS[@]}" --pull=newer --tag "${target_image}:${tag}" --file Containerfile --build-arg "NVIDIA_VARIANT=${NVIDIA_VARIANT:-open}" --build-arg "LIVE_USER=${LIVE_USER:-false}")
+    PODMAN_BUILD_ARGS=("${BUILD_ARGS[@]}" "${LABELS[@]}" --pull=newer --tag "${target_image}:${tag}" --file Containerfile --build-arg "NVIDIA_VARIANT=${NVIDIA_VARIANT:-open}")
 
     podman build "${PODMAN_BUILD_ARGS[@]}" .
 
@@ -324,15 +319,14 @@ _build-bib $target_image $tag $type $config: (_rootful_load_image target_image t
         --pull=newer \
         --net=host \
         --security-opt label=type:unconfined_t \
+        -v "$(pwd)/${config}":/config.toml:ro \
         -v $BUILDTMP:/output \
         -v /var/lib/containers/storage:/var/lib/containers/storage \
-        ghcr.io/osbuild/image-builder-cli:latest \
-        build \
-        --output-dir /output \
-        --output-name "${target_image##*/}" \
-        --bootc-ref "${target_image}:${tag}" \
-        --bootc-default-fs btrfs \
-        generic-iso
+        quay.io/centos-bootc/bootc-image-builder:latest \
+        --type iso \
+        --rootfs btrfs \
+        --use-librepo=True \
+        "${target_image}:${tag}"
     else
       args="--type ${type} "
       args+="--use-librepo=True "
@@ -377,44 +371,22 @@ build-qcow2 $target_image=("localhost/" + image_name) $tag=default_tag: && (_bui
 [group('Build Virtal Machine Image')]
 build-raw $target_image=("localhost/" + image_name) $tag=default_tag: && (_build-bib target_image tag "raw" "disk_config/disk.toml")
 
-# Build a LIVE ISO with the Anaconda WebUI using Titanoboa (builds installer image first)
+# Build an installer ISO (bootc generic-iso) via Bootc Image Builder
 [group('Build Virtal Machine Image')]
-build-iso $target_image=("localhost/" + image_name) $tag=default_tag:
-    just build ${target_image} ${tag}
-    podman build --cap-add sys_admin --security-opt label=disable --build-context containers-storage={{ containers_storage }} -f {{ iso_containerfile }} --build-arg BASE_IMAGE=${target_image}:${tag} -t ${target_image}-installer:${tag} .
-    TITANOBOA_CTR_IMAGE=${target_image}-installer:${tag} TITANOBOA_OUTPUT_DIR=./output ./iso/titanoboa/main.sh
+build-installer-iso $target_image=("localhost/" + image_name) $tag=default_tag: && (_build-bib target_image tag "iso" "disk_config/iso.toml")
 
 # Rebuild a QCOW2 virtual machine image
 [group('Build Virtal Machine Image')]
 rebuild-qcow2 $target_image=("localhost/" + image_name) $tag=default_tag: && (_rebuild-bib target_image tag "qcow2" "disk_config/disk.toml")
 
-# Rebuild a QCOW2 from a fresh (no-cache) rootful image, including LIVE_USER
-[group('Build Virtal Machine Image')]
-rebuild-qcow2-clean $target_image=("localhost/" + image_name) $tag=default_tag:
-    sudo podman build --no-cache --build-arg "LIVE_USER=true" --tag ${target_image}:${tag} --file Containerfile .
-    sudo env LIVE_USER=true just build-qcow2 ${target_image} ${tag}
-
 # Rebuild a RAW virtual machine image
 [group('Build Virtal Machine Image')]
 rebuild-raw $target_image=("localhost/" + image_name) $tag=default_tag: && (_rebuild-bib target_image tag "raw" "disk_config/disk.toml")
 
-# Rebuild a RAW image from a fresh (no-cache) rootful image
-[group('Build Virtal Machine Image')]
-rebuild-raw-clean $target_image=("localhost/" + image_name) $tag=default_tag:
-    sudo podman build --no-cache --build-arg "LIVE_USER=true" --tag ${target_image}:${tag} --file Containerfile .
-    sudo env LIVE_USER=true just build-raw ${target_image} ${tag}
-
 # Rebuild an ISO virtual machine image
 [group('Build Virtal Machine Image')]
 rebuild-iso $target_image=("localhost/" + image_name) $tag=default_tag: (build target_image tag)
-    just build-iso ${target_image} ${tag}
-
-# Rebuild a live ISO from a fresh (no-cache) rootful image, including LIVE_USER
-[group('Build Virtal Machine Image')]
-rebuild-iso-clean $target_image=("localhost/" + image_name) $tag=default_tag:
-    sudo podman build --no-cache --build-arg "LIVE_USER=true" --tag ${target_image}:${tag} --file Containerfile .
-    sudo podman build --cap-add sys_admin --security-opt label=disable --build-context containers-storage=/var/lib/containers/storage -f iso/Containerfile --build-arg BASE_IMAGE=${target_image}:${tag} -t ${target_image}-installer:${tag} .
-    sudo env TITANOBOA_CTR_IMAGE=${target_image}-installer:${tag} TITANOBOA_OUTPUT_DIR=./output ./iso/titanoboa/main.sh
+    just build-installer-iso ${target_image} ${tag}
 
 # Run a virtual machine with the specified image type and configuration
 _run-vm $target_image $tag $type $config:
@@ -448,7 +420,6 @@ _run-vm $target_image $tag $type $config:
     run_args+=(--rm --privileged)
     run_args+=(--pull=newer)
     run_args+=(--publish "${vm_host}:${port}:8006")
-    run_args+=(--publish "${vm_host}:5900:5900")
     run_args+=(--env "CPU_CORES=4")
     run_args+=(--env "RAM_SIZE=8G")
     run_args+=(--env "DISK_SIZE=64G")
@@ -475,16 +446,16 @@ run-vm-raw $target_image=("localhost/" + image_name) $tag=default_tag: && (_run-
 run-vm-iso $target_image=("localhost/" + image_name) $tag=default_tag:
     #!/usr/bin/env bash
     set -eoux pipefail
-    image_file="output/Manganite-Live.iso"
+    image_file="output/manganite.iso"
     if [[ ! -f "${image_file}" ]]; then
-        just build-iso ${target_image} ${tag}
+        just build-installer-iso ${target_image} ${tag}
     fi
     vm_host={{ vm_host }}
     port={{ vm_port }}
     qemu_image={{ qemu_image }}
     while grep -q ":${port}" <<< $(ss -tunalp); do port=$(( port + 1 )); done
     echo "Using Port: ${port}"
-    podman run --rm --privileged --pull=newer --publish "${vm_host}:${port}:8006" --publish "${vm_host}:5900:5900" \
+    podman run --rm --privileged --pull=newer --publish "${vm_host}:${port}:8006" \
         --env "CPU_CORES=4" --env "RAM_SIZE=8G" --env "DISK_SIZE=64G" \
         --env "TPM=Y" --env "GPU=Y" --device=/dev/kvm \
         --volume "${PWD}/${image_file}":"/boot.iso":Z \

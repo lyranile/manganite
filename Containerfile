@@ -4,7 +4,6 @@ ARG BASE_IMAGE_TAG="45"
 ARG BASE_IMAGE="ghcr.io/ublue-os/${BASE_IMAGE_NAME}:${BASE_IMAGE_TAG}"
 ARG ENABLE_REPOS="terra"
 ARG NVIDIA_VARIANT="open"  # open | none
-ARG LIVE_USER="false"
 
 FROM ghcr.io/ublue-os/brew:latest AS brew
 
@@ -21,10 +20,8 @@ FROM ${BASE_IMAGE}
 ARG IMAGE_NAME
 ARG ENABLE_REPOS
 ARG NVIDIA_VARIANT
-ARG LIVE_USER
 
 ENV NVIDIA_VARIANT=${NVIDIA_VARIANT}
-ENV LIVE_USER=${LIVE_USER}
 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
   --mount=type=cache,dst=/var/cache \

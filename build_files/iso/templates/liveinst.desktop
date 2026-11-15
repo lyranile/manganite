@@ -1,6 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Install Manganite
-Exec=liveinst
-Terminal=false
-X-GNOME-Autostart-enabled=true

@@ -34,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        disk-type: ["qcow2"]
+        disk-type: ["qcow2", "iso"]
     permissions:
       contents: read
       packages: read

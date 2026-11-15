@@ -13,9 +13,9 @@ on:
     branches:
       - main
     paths:
-      - './disk_config/disk.toml'
-      - './disk_config/iso.toml'
-      - './.github/workflows/build-disk.yml'
+      - "./disk_config/disk.toml"
+      - "./disk_config/iso.toml"
+      - "./.github/workflows/build-disk.yml"
 
 env:
   IMAGE_NAME: ${{ github.event.repository.name }} # output of build.yml, keep in sync
@@ -73,10 +73,10 @@ jobs:
 
       - name: Build disk images
         id: build
-        uses: osbuild/image-builder-action@028e4d28330efe546229eb9cb52aee78174d2347 # main
+        uses: osbuild/image-builder-action@v1
         with:
           builder-image: ${{ env.BIB_IMAGE }}
-          config-file: './disk_config/disk.toml'
+          config-file: "./disk_config/disk.toml"
           image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
           chown: ${{ env.USER_UID }}:${{ env.USER_GID }}
           types: ${{ matrix.disk-type }}

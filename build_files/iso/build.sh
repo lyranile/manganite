@@ -9,10 +9,18 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # bwrap tries to write /proc/sys/user/max_user_namespaces which is mounted as ro
 mount -o remount,rw /proc/sys
 
+# Ensure /var/tmp exists (tmpfs mount may have cleared it)
+mkdir -p /var/tmp
+
 # Pull the container image to be installed
 if [[ -n "${BASE_IMAGE:-}" ]]; then
 	if ! podman image exists "${BASE_IMAGE}" 2>/dev/null; then
-		podman pull "${BASE_IMAGE}"
+		# Local registries may use HTTP; disable TLS verification for localhost.
+		if [[ "${BASE_IMAGE}" == localhost* || "${BASE_IMAGE}" == 127.0.0.1* ]]; then
+			podman pull --tls-verify=false "${BASE_IMAGE}"
+		else
+			podman pull "${BASE_IMAGE}"
+		fi
 	fi
 else
 	IMAGE_INFO="$(cat /usr/share/ublue-os/image-info.json)"

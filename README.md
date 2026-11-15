@@ -13,6 +13,7 @@
 **Manganite** is a minimal, cloud-native desktop operating system built on the [Universal Blue](https://universal-blue.org/) `base-main` image. It layers the [Umbriel](https://noctalia.dev/umbriel) Wayland compositor (nightly, from Terra) and the [Noctalia](https://noctalia.dev/) shell on top of a desktop-free Fedora base, giving you a tiling, keyboard-driven desktop with near-zero maintenance.
 
 🌐 **Packages:**
+
 - Base: [`ghcr.io/lyranile/manganite:latest`](https://github.com/lyranile/manganite/pkgs/container/manganite)
 - Nvidia: [`ghcr.io/lyranile/manganite-nvidia:latest`](https://github.com/lyranile/manganite-nvidia/pkgs/container/manganite-nvidia)
 

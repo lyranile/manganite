@@ -4,15 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       upload_artifacts:
-        description: 'Upload ISOs as job artifacts'
+        description: "Upload ISOs as job artifacts"
         type: boolean
         default: true
   pull_request:
     branches:
       - main
     paths:
-      - 'iso/**'
-      - '.github/workflows/build-live-iso.yml'
+      - "iso/**"
+      - ".github/workflows/build-live-iso.yml"
 
 env:
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"
@@ -58,7 +58,7 @@ jobs:
           sudo podman build \
             --cap-add sys_admin \
             --security-opt label=disable \
-            --build-context containers-storage=/var/lib/containers/storage \
+            --security-opt seccomp=unconfined \
             --build-arg BASE_IMAGE=${IMAGE_REF}:latest \
             --tag "${CONTAINER_IMAGE_NAME}" \
             -f iso/Containerfile \

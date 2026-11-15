@@ -19,7 +19,6 @@ vm_port := "8006"
 qemu_image := "docker.io/qemux/qemu"
 alias build-vm := build-qcow2
 alias rebuild-vm := rebuild-qcow2
-alias run-vm := run-vm-qcow2
 
 [private]
 default:
@@ -373,7 +372,7 @@ build-raw $target_image=("localhost/" + image_name) $tag=default_tag: && (_build
 
 # Build an installer ISO (bootc generic-iso) via Bootc Image Builder
 [group('Build Virtal Machine Image')]
-build-installer-iso $target_image=("localhost/" + image_name) $tag=default_tag: && (_build-bib target_image tag "iso" "disk_config/iso.toml")
+build-iso $target_image=("localhost/" + image_name) $tag=default_tag: && (_build-bib target_image tag "iso" "disk_config/iso.toml")
 
 # Rebuild a QCOW2 virtual machine image
 [group('Build Virtal Machine Image')]
@@ -383,13 +382,8 @@ rebuild-qcow2 $target_image=("localhost/" + image_name) $tag=default_tag: && (_r
 [group('Build Virtal Machine Image')]
 rebuild-raw $target_image=("localhost/" + image_name) $tag=default_tag: && (_rebuild-bib target_image tag "raw" "disk_config/disk.toml")
 
-# Rebuild an ISO virtual machine image
-[group('Build Virtal Machine Image')]
-rebuild-iso $target_image=("localhost/" + image_name) $tag=default_tag: (build target_image tag)
-    just build-installer-iso ${target_image} ${tag}
-
 # Run a virtual machine with the specified image type and configuration
-_run-vm $target_image $tag $type $config:
+_run $target_image $tag $type $config:
     #!/usr/bin/env bash
     set -eoux pipefail
 
@@ -435,20 +429,23 @@ _run-vm $target_image $tag $type $config:
 
 # Run a virtual machine from a QCOW2 image
 [group('Run Virtal Machine')]
-run-vm-qcow2 $target_image=("localhost/" + image_name) $tag=default_tag: && (_run-vm target_image tag "qcow2" "disk_config/disk.toml")
+run-qcow2 $target_image=("localhost/" + image_name) $tag=default_tag: && (_run target_image tag "qcow2" "disk_config/disk.toml")
 
 # Run a virtual machine from a RAW image
 [group('Run Virtal Machine')]
-run-vm-raw $target_image=("localhost/" + image_name) $tag=default_tag: && (_run-vm target_image tag "raw" "disk_config/disk.toml")
+run-raw $target_image=("localhost/" + image_name) $tag=default_tag: && (_run target_image tag "raw" "disk_config/disk.toml")
 
 # Run a virtual machine from an ISO (live WebUI)
 [group('Run Virtal Machine')]
-run-vm-iso $target_image=("localhost/" + image_name) $tag=default_tag:
+run-iso $target_image=("localhost/" + image_name) $tag=default_tag:
     #!/usr/bin/env bash
     set -eoux pipefail
-    image_file="output/manganite.iso"
     if [[ ! -f "${image_file}" ]]; then
-        just build-installer-iso ${target_image} ${tag}
+        image_file="$(find output -type f -iname '*.iso' | head -n1)"
+    fi
+    if [[ ! -f "${image_file}" ]]; then
+        just build-iso ${target_image} ${tag}
+        image_file="$(find output -type f -iname '*.iso' | head -n1)"
     fi
     vm_host={{ vm_host }}
     port={{ vm_port }}

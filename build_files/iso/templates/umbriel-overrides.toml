@@ -1,2 +1,2 @@
 [general]
-autostart = ["noctalia", "liveinst"]
+autostart = ["noctalia"]

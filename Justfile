@@ -448,6 +448,7 @@ _run-vm $target_image $tag $type $config:
     run_args+=(--rm --privileged)
     run_args+=(--pull=newer)
     run_args+=(--publish "${vm_host}:${port}:8006")
+    run_args+=(--publish "${vm_host}:5900:5900")
     run_args+=(--env "CPU_CORES=4")
     run_args+=(--env "RAM_SIZE=8G")
     run_args+=(--env "DISK_SIZE=64G")
@@ -483,7 +484,7 @@ run-vm-iso $target_image=("localhost/" + image_name) $tag=default_tag:
     qemu_image={{ qemu_image }}
     while grep -q ":${port}" <<< $(ss -tunalp); do port=$(( port + 1 )); done
     echo "Using Port: ${port}"
-    podman run --rm --privileged --pull=newer --publish "${vm_host}:${port}:8006" \
+    podman run --rm --privileged --pull=newer --publish "${vm_host}:${port}:8006" --publish "${vm_host}:5900:5900" \
         --env "CPU_CORES=4" --env "RAM_SIZE=8G" --env "DISK_SIZE=64G" \
         --env "TPM=Y" --env "GPU=Y" --device=/dev/kvm \
         --volume "${PWD}/${image_file}":"/boot.iso":Z \

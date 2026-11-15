@@ -26,6 +26,7 @@ dnf5 -y install \
 	polkit \
 	qt6ct \
 	sushi \
+	starship \
 	umbriel-nightly \
 	xdg-desktop-portal-umbriel-nightly \
 	zsh

@@ -12,11 +12,6 @@
       "matchUpdateTypes": ["pin", "pinDigest", "digest"]
     },
     {
-      // The disk image job is pinned to ubuntu-24.04 on purpose: the
-      // ubuntu-26.04 runner image ships kernel 7.0, where osbuild's bind
-      // mount of the container store fails with EPERM
-      // (osbuild/osbuild#2579). Hold the runner below 25 until that is
-      // fixed upstream, otherwise Renovate silently breaks the disk build.
       "matchDatasources": ["github-runners"],
       "matchPackageNames": ["ubuntu"],
       "matchFileNames": [".github/workflows/build-disk.yml"],

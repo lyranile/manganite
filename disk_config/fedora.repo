@@ -9,12 +9,12 @@
 # This file is only injected into the throw-away image that the ISO is
 # built from, it is not part of the published image.
 #
-# priority=200 keeps this repository behind terra (which has the default
-# priority of 99), so packages that exist in both are taken from terra.
+# priority=50 makes Fedora win over terra (99) and the akmods COPR (85), so
+# the installer environment is resolved from Fedora only.
 [fedora]
 name=Fedora $releasever
 metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch
 gpgkey=file:///usr/share/pki/rpm-gpg/RPM-GPG-KEY-45-fedora
 gpgcheck=1
 enabled=1
-priority=200
+priority=50

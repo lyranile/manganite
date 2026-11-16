@@ -1,0 +1,20 @@
+# Fedora repository, used while building the installer ISO.
+#
+# bootc-image-builder (image-builder < v89) resolves the packages of the
+# anaconda installer environment using the repositories it finds in the
+# *input image*. Universal Blue images ship no Fedora repositories, so the
+# anaconda/grub2/lorax package set could not be resolved at all and the
+# build failed with "missing packages: anaconda, grub2-tools, ...".
+#
+# This file is only injected into the throw-away image that the ISO is
+# built from, it is not part of the published image.
+#
+# priority=200 keeps this repository behind terra (which has the default
+# priority of 99), so packages that exist in both are taken from terra.
+[fedora]
+name=Fedora $releasever
+metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch
+gpgkey=file:///usr/share/pki/rpm-gpg/RPM-GPG-KEY-45-fedora
+gpgcheck=1
+enabled=1
+priority=200

@@ -1,6 +1,7 @@
 NAME="Manganite"
 VERSION="45.20261110.0 (Forty Five)"
 ID=fedora
+ID_LIKE="fedora"
 VERSION_ID="45"
 VERSION_CODENAME=""
 RELEASE_TYPE=stable

@@ -76,9 +76,21 @@ jobs:
         run: |
           set -eoux pipefail
           CONFIG=$(if [ "${{ matrix.disk-type }}" = "iso" ]; then echo "./disk_config/iso.toml"; else echo "./disk_config/disk.toml"; fi)
-          sudo podman pull "${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}"
+          IMAGE="${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}"
+          sudo podman pull "${IMAGE}"
+          if [ "${{ matrix.disk-type }}" = "iso" ]; then
+            # The installer packages are resolved from the repositories of the
+            # image the builder is given, and Universal Blue images have no
+            # Fedora repositories. Build a throw-away image that has one.
+            sudo podman build \
+              --build-arg "BASE_IMAGE=${IMAGE}" \
+              -t localhost/${IMAGE_NAME}-iso-build:latest \
+              -f ./disk_config/iso-build.Containerfile \
+              ./disk_config
+            IMAGE="localhost/${IMAGE_NAME}-iso-build:latest"
+          fi
           sudo mkdir -p output rpm-gpg
-          sudo podman run --rm -v ./rpm-gpg:/out:Z "${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}" \
+          sudo podman run --rm -v ./rpm-gpg:/out:Z "${IMAGE}" \
             bash -c 'cp -aL /etc/pki/rpm-gpg/. /out/ 2>/dev/null || true; cp -aL /usr/share/pki/rpm-gpg/. /out/ 2>/dev/null || true'
           sudo podman run \
             --rm \
@@ -96,7 +108,7 @@ jobs:
             --type ${{ matrix.disk-type }} \
             --rootfs btrfs \
             --use-librepo=True \
-            "${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}"
+            "${IMAGE}"
           sudo chown -R ${USER_UID}:${USER_GID} output
           (cd output && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
           echo "output-directory=$(realpath output)" >> "${GITHUB_OUTPUT}"

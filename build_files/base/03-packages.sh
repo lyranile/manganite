@@ -14,6 +14,7 @@ dnf5 -y install \
 	git \
 	greetd \
 	i2c-tools \
+	luciole \
 	nautilus \
 	nautilus-extensions \
 	noctalia \

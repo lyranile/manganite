@@ -79,9 +79,6 @@ jobs:
           IMAGE="${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}"
           sudo podman pull "${IMAGE}"
           if [ "${{ matrix.disk-type }}" = "iso" ]; then
-            # The installer packages are resolved from the repositories of the
-            # image the builder is given, and Universal Blue images have no
-            # Fedora repositories. Build a throw-away image that has one.
             sudo podman build \
               --build-arg "BASE_IMAGE=${IMAGE}" \
               -t localhost/${IMAGE_NAME}-iso-build:latest \

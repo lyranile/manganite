@@ -1,16 +1,3 @@
-# Fedora repository, used while building the installer ISO.
-#
-# bootc-image-builder (image-builder < v89) resolves the packages of the
-# anaconda installer environment using the repositories it finds in the
-# *input image*. Universal Blue images ship no Fedora repositories, so the
-# anaconda/grub2/lorax package set could not be resolved at all and the
-# build failed with "missing packages: anaconda, grub2-tools, ...".
-#
-# This file is only injected into the throw-away image that the ISO is
-# built from, it is not part of the published image.
-#
-# priority=50 makes Fedora win over terra (99) and the akmods COPR (85), so
-# the installer environment is resolved from Fedora only.
 [fedora]
 name=Fedora $releasever
 metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch

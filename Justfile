@@ -278,9 +278,6 @@ _build-bib $target_image $tag $type $config: (_rootful_load_image target_image t
       bash -c 'cp -aL /etc/pki/rpm-gpg/. /out/ 2>/dev/null || true; cp -aL /usr/share/pki/rpm-gpg/. /out/ 2>/dev/null || true'
 
     if [[ "${type}" == "iso" ]]; then
-      # The installer packages are resolved from the repositories of the image
-      # the builder is given, and Universal Blue images have no Fedora
-      # repositories. Build a throw-away image that has one.
       ISO_IMAGE="localhost/$(basename "${target_image}")-iso-build:latest"
       sudo podman build \
         --build-arg "BASE_IMAGE=${target_image}:${tag}" \

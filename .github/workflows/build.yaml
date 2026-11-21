@@ -28,9 +28,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - variant: nvidia
+          - variant: nvidia-open
             nvidia_variant: open
-            image_suffix: "-nvidia"
+            image_suffix: "-nvidia-open"
           - variant: none
             nvidia_variant: none
             image_suffix: ""

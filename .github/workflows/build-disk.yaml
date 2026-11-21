@@ -14,10 +14,10 @@ on:
       - main
     paths:
       - "disk_config/**"
-      - ".github/workflows/build-disk.yml"
+      - ".github/workflows/build-disk.yaml"
 
 env:
-  IMAGE_NAME: ${{ github.event.repository.name }} # output of build.yml, keep in sync
+  IMAGE_NAME: ${{ github.event.repository.name }} # output of build.yaml, keep in sync
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}" # do not edit
   DEFAULT_TAG: "latest"
   BIB_IMAGE: "quay.io/centos-bootc/bootc-image-builder@sha256:dab86ee6b46dcade411b37f4e70b07d93b6a06da0dbfec6fe89247a220e0d9f8"
@@ -33,7 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        disk-type: ["qcow2", "iso"]
+        disk-type: ["qcow2", "iso", "iso-nvidia-open"]
     permissions:
       contents: read
       packages: read
@@ -76,24 +76,26 @@ jobs:
           IMAGE_TYPE: ${{ matrix.disk-type }}
         run: |
           set -eoux pipefail
-          CONFIG=$(if [ "${IMAGE_TYPE}" = "iso" ]; then echo "./disk_config/iso.toml"; else echo "./disk_config/disk.toml"; fi)
-          PUBLISHED_IMAGE="${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}"
+          case "${IMAGE_TYPE}" in
+            iso)
+              CONFIG="./disk_config/iso.toml"
+              PUBLISHED_IMAGE="${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}"
+              BIB_TYPE="iso"
+              ;;
+            iso-nvidia-open)
+              CONFIG="./disk_config/iso-nvidia-open.toml"
+              PUBLISHED_IMAGE="${IMAGE_REGISTRY}/${IMAGE_NAME}-nvidia-open:${DEFAULT_TAG}"
+              BIB_TYPE="iso"
+              ;;
+            *)
+              CONFIG="./disk_config/disk.toml"
+              PUBLISHED_IMAGE="${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}"
+              BIB_TYPE="${IMAGE_TYPE}"
+              ;;
+          esac
           sudo podman pull "${PUBLISHED_IMAGE}"
-          BUILD_IMAGE="${PUBLISHED_IMAGE}"
-          EXTRA_ARGS=()
-          if [ "${IMAGE_TYPE}" = "iso" ]; then
-            sudo podman build \
-              --build-arg "BASE_IMAGE=${PUBLISHED_IMAGE}" \
-              -t "localhost/${IMAGE_NAME}-iso-build:latest" \
-              -f ./disk_config/iso-build.Containerfile \
-              ./disk_config
-            BUILD_IMAGE="localhost/${IMAGE_NAME}-iso-build:latest"
-            EXTRA_ARGS+=(--installer-payload-ref "${PUBLISHED_IMAGE}")
-            sudo podman run --rm "${BUILD_IMAGE}" bash -c \
-              'source /etc/os-release; key="/usr/share/pki/rpm-gpg/RPM-GPG-KEY-${VERSION_ID}-fedora"; test -f "$key" || { echo "Missing Fedora GPG key for ISO depsolve: $key" >&2; exit 1; }'
-          fi
           sudo mkdir -p output rpm-gpg
-          sudo podman run --rm -v ./rpm-gpg:/out:Z "${BUILD_IMAGE}" \
+          sudo podman run --rm -v ./rpm-gpg:/out:Z "${PUBLISHED_IMAGE}" \
             bash -c 'cp -aL /etc/pki/rpm-gpg/. /out/ 2>/dev/null || true; cp -aL /usr/share/pki/rpm-gpg/. /out/ 2>/dev/null || true'
           sudo podman run \
             --rm \
@@ -108,11 +110,10 @@ jobs:
             -v "$PWD/output:/output" \
             -v /var/lib/containers/storage:/var/lib/containers/storage \
             "${BIB_IMAGE}" \
-            --type "${IMAGE_TYPE}" \
+            --type "${BIB_TYPE}" \
             --rootfs btrfs \
             --use-librepo=True \
-            ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"} \
-            "${BUILD_IMAGE}"
+            "${PUBLISHED_IMAGE}"
           sudo chown -R "${USER_UID}:${USER_GID}" output
           (cd output && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
           echo "output-directory=$(realpath output)" >> "${GITHUB_OUTPUT}"

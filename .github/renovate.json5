@@ -2,7 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:best-practices"],
 
-  // Dependabot owns the chunkah image pin (see .github/dependabot.yml).
+  // Dependabot owns the chunkah image pin (see .github/dependabot.yaml).
   // Keep Renovate off it so the two tools don't open conflicting PRs.
   "ignorePaths": ["tools/chunkah/Dockerfile"],
 
@@ -14,7 +14,7 @@
     {
       "matchDatasources": ["github-runners"],
       "matchPackageNames": ["ubuntu"],
-      "matchFileNames": [".github/workflows/build-disk.yml"],
+      "matchFileNames": [".github/workflows/build-disk.yaml"],
       "allowedVersions": "<25"
     }
   ]

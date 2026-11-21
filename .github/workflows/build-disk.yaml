@@ -38,6 +38,8 @@ jobs:
       contents: read
       packages: read
       id-token: write
+    if: |
+      matrix.disk-type != 'iso-nvidia-open' || github.event_name != 'pull_request'
 
     steps:
       - name: Prepare environment

@@ -8,19 +8,18 @@ export image_keywords := env("IMAGE_KEYWORDS")
 export image_logo_url := env("IMAGE_LOGO_URL")
 export default_tag := env("DEFAULT_TAG")
 export bib_image := env("BIB_IMAGE")
-chunkah_image := "quay.io/coreos/chunkah:v0.7.1@sha256:71e593421c5de7dcc7c8c5c50e98d3bac572055a76f399f61a491d123c20a523"
+export chunkah_image := "quay.io/coreos/chunkah:latest"
 
 export PODMAN := "podman"
 export BUILDAH := "buildah"
 export SUDOIF := if `id -u` == "0" { "" } else { "sudo" }
 
 # VM run defaults
-vm_host := "127.0.0.1"
-vm_port := "8006"
-qemu_image := "docker.io/qemux/qemu"
+export vm_host := "127.0.0.1"
+export vm_port := "8006"
+export qemu_image := "docker.io/qemux/qemu"
 alias build-vm := build-qcow2
 alias rebuild-vm := rebuild-qcow2
-# Pre-rename alias, also used dynamically by `_run` as `build-${type}`
 alias build-iso := build-installer-iso
 
 [private]
@@ -81,8 +80,7 @@ sudoif command *args:
     }
     sudoif {{ command }} {{ args }}
 
-# Build the container image with Podman.
-# Labels include the short SHA of HEAD when the git worktree is clean.
+# Build the container
 build $target_image=image_name $tag=default_tag:
     #!/usr/bin/env bash
 
@@ -260,22 +258,7 @@ _build-bib $target_image $tag $type $config: (_rootful_load_image target_image t
     GPGDIR=$(mktemp -d "${PWD}/_build-bib-gpg.XXXXXXXXXX")
     trap 'rm -rf "${GPGDIR}"' EXIT
 
-    if [[ "${type}" == "iso" ]]; then
-      ISO_IMAGE="localhost/$(basename "${target_image}")-iso-build:latest"
-      sudo podman build \
-        --build-arg "BASE_IMAGE=${target_image}:${tag}" \
-        -t "${ISO_IMAGE}" \
-        -f ./disk_config/iso-build.Containerfile \
-        ./disk_config
-
-      BUILD_IMAGE="${ISO_IMAGE}"
-      EXTRA_ARGS=(--installer-payload-ref "${INSTALL_IMAGE_REF:-${target_image}:${tag}}")
-      sudo podman run --rm "${BUILD_IMAGE}" bash -c \
-        'source /etc/os-release; key="/usr/share/pki/rpm-gpg/RPM-GPG-KEY-${VERSION_ID}-fedora"; test -f "$key" || { echo "Missing Fedora GPG key for ISO depsolve: $key" >&2; exit 1; }'
-    else
-      BUILD_IMAGE="${target_image}:${tag}"
-      EXTRA_ARGS=()
-    fi
+    BUILD_IMAGE="${target_image}:${tag}"
 
     sudo podman run --rm -v "${GPGDIR}:/out:Z" "${BUILD_IMAGE}" \
       bash -c 'cp -aL /etc/pki/rpm-gpg/. /out/ 2>/dev/null || true; cp -aL /usr/share/pki/rpm-gpg/. /out/ 2>/dev/null || true'
@@ -296,7 +279,6 @@ _build-bib $target_image $tag $type $config: (_rootful_load_image target_image t
       --type "${type}" \
       --rootfs btrfs \
       --use-librepo=True \
-      ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"} \
       "${BUILD_IMAGE}"
 
     rm -rf output
@@ -317,7 +299,6 @@ build-qcow2 $target_image=("localhost/" + image_name) $tag=default_tag: && (_bui
 build-raw $target_image=("localhost/" + image_name) $tag=default_tag: && (_build-bib target_image tag "raw" "disk_config/disk.toml")
 
 # Build an installer ISO (legacy anaconda-iso, bootc-image-builder --type iso)
-# For distributable ISOs built from a local image, set INSTALL_IMAGE_REF to the published registry ref.
 [group('Build Virtual Machine Image')]
 build-installer-iso $target_image=("localhost/" + image_name) $tag=default_tag: && (_build-bib target_image tag "iso" "disk_config/iso.toml")
 

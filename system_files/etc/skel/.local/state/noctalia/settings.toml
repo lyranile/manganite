@@ -23,7 +23,7 @@ position = "bottom"
 auto_hide = true
 magnification = false
 pinned = ["com.mitchellh.ghostty", "org.mozilla.firefox", "org.gnome.Nautilus"]
-reserve_space = true
+reserve_space = false
 show_dots = true
 
 [lockscreen_widgets]

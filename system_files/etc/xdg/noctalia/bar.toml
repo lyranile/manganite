@@ -1,6 +1,8 @@
 [bar.default]
 enabled = true
 position = "top"
+auto_hide = true
+reserve_space = false
 shadow = false
 contact_shadow = false
 

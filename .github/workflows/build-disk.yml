@@ -13,8 +13,7 @@ on:
     branches:
       - main
     paths:
-      - "disk_config/disk.toml"
-      - "disk_config/iso.toml"
+      - "disk_config/**"
       - ".github/workflows/build-disk.yml"
 
 env:
@@ -73,21 +72,26 @@ jobs:
 
       - name: Build disk images
         id: build
+        env:
+          IMAGE_TYPE: ${{ matrix.disk-type }}
         run: |
           set -eoux pipefail
-          CONFIG=$(if [ "${{ matrix.disk-type }}" = "iso" ]; then echo "./disk_config/iso.toml"; else echo "./disk_config/disk.toml"; fi)
-          IMAGE="${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}"
-          sudo podman pull "${IMAGE}"
-          if [ "${{ matrix.disk-type }}" = "iso" ]; then
+          CONFIG=$(if [ "${IMAGE_TYPE}" = "iso" ]; then echo "./disk_config/iso.toml"; else echo "./disk_config/disk.toml"; fi)
+          PUBLISHED_IMAGE="${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}"
+          sudo podman pull "${PUBLISHED_IMAGE}"
+          BUILD_IMAGE="${PUBLISHED_IMAGE}"
+          EXTRA_ARGS=()
+          if [ "${IMAGE_TYPE}" = "iso" ]; then
             sudo podman build \
-              --build-arg "BASE_IMAGE=${IMAGE}" \
-              -t localhost/${IMAGE_NAME}-iso-build:latest \
+              --build-arg "BASE_IMAGE=${PUBLISHED_IMAGE}" \
+              -t "localhost/${IMAGE_NAME}-iso-build:latest" \
               -f ./disk_config/iso-build.Containerfile \
               ./disk_config
-            IMAGE="localhost/${IMAGE_NAME}-iso-build:latest"
+            BUILD_IMAGE="localhost/${IMAGE_NAME}-iso-build:latest"
+            EXTRA_ARGS+=(--installer-payload-ref "${PUBLISHED_IMAGE}")
           fi
           sudo mkdir -p output rpm-gpg
-          sudo podman run --rm -v ./rpm-gpg:/out:Z "${IMAGE}" \
+          sudo podman run --rm -v ./rpm-gpg:/out:Z "${BUILD_IMAGE}" \
             bash -c 'cp -aL /etc/pki/rpm-gpg/. /out/ 2>/dev/null || true; cp -aL /usr/share/pki/rpm-gpg/. /out/ 2>/dev/null || true'
           sudo podman run \
             --rm \
@@ -102,11 +106,12 @@ jobs:
             -v "$PWD/output:/output" \
             -v /var/lib/containers/storage:/var/lib/containers/storage \
             "${BIB_IMAGE}" \
-            --type ${{ matrix.disk-type }} \
+            --type "${IMAGE_TYPE}" \
             --rootfs btrfs \
             --use-librepo=True \
-            "${IMAGE}"
-          sudo chown -R ${USER_UID}:${USER_GID} output
+            ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"} \
+            "${BUILD_IMAGE}"
+          sudo chown -R "${USER_UID}:${USER_GID}" output
           (cd output && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
           echo "output-directory=$(realpath output)" >> "${GITHUB_OUTPUT}"
 

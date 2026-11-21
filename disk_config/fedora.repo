@@ -1,7 +1,7 @@
 [fedora]
 name=Fedora $releasever
 metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch
-gpgkey=file:///usr/share/pki/rpm-gpg/RPM-GPG-KEY-45-fedora
+gpgkey=file:///usr/share/pki/rpm-gpg/RPM-GPG-KEY-$releasever-fedora
 gpgcheck=1
 enabled=1
 priority=50

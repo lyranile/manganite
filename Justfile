@@ -272,57 +272,45 @@ _build-bib $target_image $tag $type $config: (_rootful_load_image target_image t
     BUILDTMP=$(mktemp -p "${PWD}" -d -t _build-bib.XXXXXXXXXX)
     GPGDIR=$(mktemp -d "${PWD}/_build-bib-gpg.XXXXXXXXXX")
     trap 'rm -rf "${GPGDIR}"' EXIT
-    sudo podman run --rm \
-      -v "${GPGDIR}":/out:Z \
-      "${target_image}:${tag}" \
-      bash -c 'cp -aL /etc/pki/rpm-gpg/. /out/ 2>/dev/null || true; cp -aL /usr/share/pki/rpm-gpg/. /out/ 2>/dev/null || true'
 
     if [[ "${type}" == "iso" ]]; then
       ISO_IMAGE="localhost/$(basename "${target_image}")-iso-build:latest"
       sudo podman build \
         --build-arg "BASE_IMAGE=${target_image}:${tag}" \
         -t "${ISO_IMAGE}" \
-        -f "$(pwd)/disk_config/iso-build.Containerfile" \
-        "$(pwd)/disk_config"
+        -f ./disk_config/iso-build.Containerfile \
+        ./disk_config
 
-      sudo podman run \
-        --rm \
-        -it \
-        --privileged \
-        --pull=newer \
-        --net=host \
-        --security-opt label=type:unconfined_t \
-        -v "${GPGDIR}":/etc/pki/rpm-gpg:ro,Z \
-        -v "${GPGDIR}":/usr/share/pki/rpm-gpg:ro,Z \
-        -v "$(pwd)/${config}":/config.toml:ro \
-        -v "${BUILDTMP}":/output \
-        -v /var/lib/containers/storage:/var/lib/containers/storage \
-        "${bib_image}" \
-        --type iso \
-        --rootfs btrfs \
-        --use-librepo=True \
-        "${ISO_IMAGE}"
+      BUILD_IMAGE="${ISO_IMAGE}"
+      EXTRA_ARGS=(--installer-payload-ref "${INSTALL_IMAGE_REF:-${target_image}:${tag}}")
+      sudo podman run --rm "${BUILD_IMAGE}" bash -c \
+        'source /etc/os-release; key="/usr/share/pki/rpm-gpg/RPM-GPG-KEY-${VERSION_ID}-fedora"; test -f "$key" || { echo "Missing Fedora GPG key for ISO depsolve: $key" >&2; exit 1; }'
     else
-      args="--type ${type} "
-      args+="--use-librepo=True "
-      args+="--rootfs=btrfs"
-
-      sudo podman run \
-        --rm \
-        -it \
-        --privileged \
-        --pull=newer \
-        --net=host \
-        --security-opt label=type:unconfined_t \
-        -v "${GPGDIR}":/etc/pki/rpm-gpg:ro,Z \
-        -v "${GPGDIR}":/usr/share/pki/rpm-gpg:ro,Z \
-        -v "$(pwd)/${config}":/config.toml:ro \
-        -v "${BUILDTMP}":/output \
-        -v /var/lib/containers/storage:/var/lib/containers/storage \
-        "${bib_image}" \
-        ${args} \
-        "${target_image}:${tag}"
+      BUILD_IMAGE="${target_image}:${tag}"
+      EXTRA_ARGS=()
     fi
+
+    sudo podman run --rm -v "${GPGDIR}:/out:Z" "${BUILD_IMAGE}" \
+      bash -c 'cp -aL /etc/pki/rpm-gpg/. /out/ 2>/dev/null || true; cp -aL /usr/share/pki/rpm-gpg/. /out/ 2>/dev/null || true'
+
+    sudo podman run \
+      --rm \
+      -it \
+      --privileged \
+      --pull=newer \
+      --net=host \
+      --security-opt label=type:unconfined_t \
+      -v "${GPGDIR}:/etc/pki/rpm-gpg:ro,Z" \
+      -v "${GPGDIR}:/usr/share/pki/rpm-gpg:ro,Z" \
+      -v "$(pwd)/${config}:/config.toml:ro" \
+      -v "${BUILDTMP}:/output" \
+      -v /var/lib/containers/storage:/var/lib/containers/storage \
+      "${bib_image}" \
+      --type "${type}" \
+      --rootfs btrfs \
+      --use-librepo=True \
+      ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"} \
+      "${BUILD_IMAGE}"
 
     rm -rf output
     mkdir -p output
@@ -341,7 +329,8 @@ build-qcow2 $target_image=("localhost/" + image_name) $tag=default_tag: && (_bui
 [group('Build Virtual Machine Image')]
 build-raw $target_image=("localhost/" + image_name) $tag=default_tag: && (_build-bib target_image tag "raw" "disk_config/disk.toml")
 
-# Build an installer ISO (bootc generic-iso) via Bootc Image Builder
+# Build an installer ISO (legacy anaconda-iso, bootc-image-builder --type iso)
+# For distributable ISOs built from a local image, set INSTALL_IMAGE_REF to the published registry ref.
 [group('Build Virtual Machine Image')]
 build-installer-iso $target_image=("localhost/" + image_name) $tag=default_tag: && (_build-bib target_image tag "iso" "disk_config/iso.toml")
 

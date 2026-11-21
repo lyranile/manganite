@@ -1,4 +1,6 @@
 [bar.default]
+enabled = true
+position = "top"
 shadow = false
 contact_shadow = false
 

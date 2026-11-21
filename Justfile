@@ -8,18 +8,18 @@ export image_keywords := env("IMAGE_KEYWORDS")
 export image_logo_url := env("IMAGE_LOGO_URL")
 export default_tag := env("DEFAULT_TAG")
 export bib_image := env("BIB_IMAGE")
+export chunkah_image := "quay.io/coreos/chunkah:latest"
 
 export PODMAN := "podman"
 export BUILDAH := "buildah"
 export SUDOIF := if `id -u` == "0" { "" } else { "sudo" }
 
 # VM run defaults
-vm_host := "127.0.0.1"
-vm_port := "8006"
-qemu_image := "docker.io/qemux/qemu"
+export vm_host := "127.0.0.1"
+export vm_port := "8006"
+export qemu_image := "docker.io/qemux/qemu"
 alias build-vm := build-qcow2
 alias rebuild-vm := rebuild-qcow2
-# Pre-rename alias, also used dynamically by `_run` as `build-${type}`
 alias build-iso := build-installer-iso
 
 [private]
@@ -80,8 +80,7 @@ sudoif command *args:
     }
     sudoif {{ command }} {{ args }}
 
-# Build the container image with Podman.
-# Labels include the short SHA of HEAD when the git worktree is clean.
+# Build the container
 build $target_image=image_name $tag=default_tag:
     #!/usr/bin/env bash
 
@@ -120,20 +119,6 @@ rechunk $target_image=image_name $tag=default_tag:
 
     # This makes a full copy of the image; may exhaust disk on CI runners
     # unless the base image also uses chunkah.
-    CHUNKAH_PIN_FILE="{{ justfile_directory() }}/tools/chunkah/Dockerfile"
-
-    if [[ ! -f "${CHUNKAH_PIN_FILE}" ]]; then
-        echo "Missing chunkah pin file: ${CHUNKAH_PIN_FILE}" >&2
-        exit 1
-    fi
-
-    CHUNKAH_IMAGE="$(awk '$1 == "FROM" { print $2; exit }' "${CHUNKAH_PIN_FILE}")"
-
-    if [[ -z "${CHUNKAH_IMAGE}" ]]; then
-        echo "No FROM image found in ${CHUNKAH_PIN_FILE}" >&2
-        exit 1
-    fi
-
     CHUNKAH_CONFIG_FILE="$(mktemp)"
 
     # Build in ./ (not /tmp) to avoid /tmp space limits
@@ -146,7 +131,7 @@ rechunk $target_image=image_name $tag=default_tag:
       --mount=type=image,src="${target_image}:${tag}",target=/chunkah \
       -v "${CHUNKAH_CONFIG_FILE}:/chunkah-config.json:ro,Z" \
       -v "${CHUNKAH_OUTPUT_DIR}:/run/out:Z" \
-      "${CHUNKAH_IMAGE}" \
+      "{{ chunkah_image }}" \
       build \
       --verbose \
       --compressed \
@@ -273,22 +258,7 @@ _build-bib $target_image $tag $type $config: (_rootful_load_image target_image t
     GPGDIR=$(mktemp -d "${PWD}/_build-bib-gpg.XXXXXXXXXX")
     trap 'rm -rf "${GPGDIR}"' EXIT
 
-    if [[ "${type}" == "iso" ]]; then
-      ISO_IMAGE="localhost/$(basename "${target_image}")-iso-build:latest"
-      sudo podman build \
-        --build-arg "BASE_IMAGE=${target_image}:${tag}" \
-        -t "${ISO_IMAGE}" \
-        -f ./disk_config/iso-build.Containerfile \
-        ./disk_config
-
-      BUILD_IMAGE="${ISO_IMAGE}"
-      EXTRA_ARGS=(--installer-payload-ref "${INSTALL_IMAGE_REF:-${target_image}:${tag}}")
-      sudo podman run --rm "${BUILD_IMAGE}" bash -c \
-        'source /etc/os-release; key="/usr/share/pki/rpm-gpg/RPM-GPG-KEY-${VERSION_ID}-fedora"; test -f "$key" || { echo "Missing Fedora GPG key for ISO depsolve: $key" >&2; exit 1; }'
-    else
-      BUILD_IMAGE="${target_image}:${tag}"
-      EXTRA_ARGS=()
-    fi
+    BUILD_IMAGE="${target_image}:${tag}"
 
     sudo podman run --rm -v "${GPGDIR}:/out:Z" "${BUILD_IMAGE}" \
       bash -c 'cp -aL /etc/pki/rpm-gpg/. /out/ 2>/dev/null || true; cp -aL /usr/share/pki/rpm-gpg/. /out/ 2>/dev/null || true'
@@ -309,7 +279,6 @@ _build-bib $target_image $tag $type $config: (_rootful_load_image target_image t
       --type "${type}" \
       --rootfs btrfs \
       --use-librepo=True \
-      ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"} \
       "${BUILD_IMAGE}"
 
     rm -rf output
@@ -330,7 +299,6 @@ build-qcow2 $target_image=("localhost/" + image_name) $tag=default_tag: && (_bui
 build-raw $target_image=("localhost/" + image_name) $tag=default_tag: && (_build-bib target_image tag "raw" "disk_config/disk.toml")
 
 # Build an installer ISO (legacy anaconda-iso, bootc-image-builder --type iso)
-# For distributable ISOs built from a local image, set INSTALL_IMAGE_REF to the published registry ref.
 [group('Build Virtual Machine Image')]
 build-installer-iso $target_image=("localhost/" + image_name) $tag=default_tag: && (_build-bib target_image tag "iso" "disk_config/iso.toml")
 

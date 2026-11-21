@@ -1,5 +1,3 @@
-# Used only by the throw-away ISO build image for installer depsolve.
-# Keep in sync with the base image Fedora release.
 [fedora]
 name=Fedora $releasever
 metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch

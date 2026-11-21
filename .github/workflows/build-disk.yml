@@ -89,13 +89,15 @@ jobs:
               ./disk_config
             BUILD_IMAGE="localhost/${IMAGE_NAME}-iso-build:latest"
             EXTRA_ARGS+=(--installer-payload-ref "${PUBLISHED_IMAGE}")
+            sudo podman run --rm "${BUILD_IMAGE}" bash -c \
+              'source /etc/os-release; key="/usr/share/pki/rpm-gpg/RPM-GPG-KEY-${VERSION_ID}-fedora"; test -f "$key" || { echo "Missing Fedora GPG key for ISO depsolve: $key" >&2; exit 1; }'
           fi
           sudo mkdir -p output rpm-gpg
           sudo podman run --rm -v ./rpm-gpg:/out:Z "${BUILD_IMAGE}" \
             bash -c 'cp -aL /etc/pki/rpm-gpg/. /out/ 2>/dev/null || true; cp -aL /usr/share/pki/rpm-gpg/. /out/ 2>/dev/null || true'
           sudo podman run \
             --rm \
-            -it \
+            -i \
             --privileged \
             --pull=newer \
             --net=host \

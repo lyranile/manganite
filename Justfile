@@ -283,6 +283,8 @@ _build-bib $target_image $tag $type $config: (_rootful_load_image target_image t
 
       BUILD_IMAGE="${ISO_IMAGE}"
       EXTRA_ARGS=(--installer-payload-ref "${INSTALL_IMAGE_REF:-${target_image}:${tag}}")
+      sudo podman run --rm "${BUILD_IMAGE}" bash -c \
+        'source /etc/os-release; key="/usr/share/pki/rpm-gpg/RPM-GPG-KEY-${VERSION_ID}-fedora"; test -f "$key" || { echo "Missing Fedora GPG key for ISO depsolve: $key" >&2; exit 1; }'
     else
       BUILD_IMAGE="${target_image}:${tag}"
       EXTRA_ARGS=()

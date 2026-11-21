@@ -8,6 +8,7 @@ export image_keywords := env("IMAGE_KEYWORDS")
 export image_logo_url := env("IMAGE_LOGO_URL")
 export default_tag := env("DEFAULT_TAG")
 export bib_image := env("BIB_IMAGE")
+chunkah_image := "quay.io/coreos/chunkah:v0.7.1@sha256:71e593421c5de7dcc7c8c5c50e98d3bac572055a76f399f61a491d123c20a523"
 
 export PODMAN := "podman"
 export BUILDAH := "buildah"
@@ -120,20 +121,6 @@ rechunk $target_image=image_name $tag=default_tag:
 
     # This makes a full copy of the image; may exhaust disk on CI runners
     # unless the base image also uses chunkah.
-    CHUNKAH_PIN_FILE="{{ justfile_directory() }}/tools/chunkah/Dockerfile"
-
-    if [[ ! -f "${CHUNKAH_PIN_FILE}" ]]; then
-        echo "Missing chunkah pin file: ${CHUNKAH_PIN_FILE}" >&2
-        exit 1
-    fi
-
-    CHUNKAH_IMAGE="$(awk '$1 == "FROM" { print $2; exit }' "${CHUNKAH_PIN_FILE}")"
-
-    if [[ -z "${CHUNKAH_IMAGE}" ]]; then
-        echo "No FROM image found in ${CHUNKAH_PIN_FILE}" >&2
-        exit 1
-    fi
-
     CHUNKAH_CONFIG_FILE="$(mktemp)"
 
     # Build in ./ (not /tmp) to avoid /tmp space limits
@@ -146,7 +133,7 @@ rechunk $target_image=image_name $tag=default_tag:
       --mount=type=image,src="${target_image}:${tag}",target=/chunkah \
       -v "${CHUNKAH_CONFIG_FILE}:/chunkah-config.json:ro,Z" \
       -v "${CHUNKAH_OUTPUT_DIR}:/run/out:Z" \
-      "${CHUNKAH_IMAGE}" \
+      "{{ chunkah_image }}" \
       build \
       --verbose \
       --compressed \

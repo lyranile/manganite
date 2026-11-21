@@ -271,12 +271,6 @@ _build-bib $target_image $tag $type $config: (_rootful_load_image target_image t
     set -euo pipefail
 
     BUILDTMP=$(mktemp -p "${PWD}" -d -t _build-bib.XXXXXXXXXX)
-    GPGDIR=$(mktemp -d "${PWD}/_build-bib-gpg.XXXXXXXXXX")
-    trap 'rm -rf "${GPGDIR}"' EXIT
-    sudo podman run --rm \
-      -v "${GPGDIR}":/out:Z \
-      "${target_image}:${tag}" \
-      bash -c 'cp -aL /etc/pki/rpm-gpg/. /out/ 2>/dev/null || true; cp -aL /usr/share/pki/rpm-gpg/. /out/ 2>/dev/null || true'
 
     if [[ "${type}" == "iso" ]]; then
       INSTALLER_IMAGE="localhost/$(basename "${target_image}")-installer:latest"

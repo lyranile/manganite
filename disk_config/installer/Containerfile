@@ -1,4 +1,4 @@
-# Installer environment image for Manganite (bootc + Anaconda Web UI), used to build a generic-iso.
+# Installer environment image for Manganite (bootc + Anaconda GUI), used to build a generic-iso.
 # Produces an installer ISO (not a full desktop live session).
 ARG INSTALLER_BASE=quay.io/fedora/fedora-bootc:45
 FROM ${INSTALLER_BASE}
@@ -9,11 +9,11 @@ FROM ${INSTALLER_BASE}
 ARG PAYLOAD_SOURCE=registry:ghcr.io/lyranile/manganite:latest
 ARG PAYLOAD_TARGET=ghcr.io/lyranile/manganite:latest
 
-# Anaconda installer, modern Web UI frontend, and boot/ISO media dependencies.
+# Anaconda installer (local graphical UI) and boot/ISO media dependencies.
 RUN dnf5 install -qy \
       anaconda \
-      anaconda-webui \
-      firefox \
+      anaconda-gui \
+      anaconda-install-env-deps \
       anaconda-install-img-deps \
       anaconda-dracut \
       dracut-config-generic \
@@ -35,10 +35,6 @@ RUN mkdir -p /boot/efi && cp -ra /usr/lib/efi/*/*/EFI /boot/efi
 # ISO boot menu consumed by image-builder (generic-iso).
 RUN mkdir -p /usr/lib/image-builder/bootc
 COPY iso.yaml /usr/lib/image-builder/bootc/iso.yaml
-
-# Optional Anaconda/Web UI profile overrides.
-RUN mkdir -p /etc/anaconda/profile.d
-COPY profile.d/ /etc/anaconda/profile.d/
 
 # Tell Anaconda to install the bootc payload.
 RUN cat > /usr/share/anaconda/interactive-defaults.ks <<EOF

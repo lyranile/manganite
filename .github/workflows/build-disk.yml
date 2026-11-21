@@ -21,6 +21,7 @@ env:
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}" # do not edit
   DEFAULT_TAG: "latest"
   BIB_IMAGE: "quay.io/centos-bootc/bootc-image-builder@sha256:dab86ee6b46dcade411b37f4e70b07d93b6a06da0dbfec6fe89247a220e0d9f8"
+  IMAGE_BUILDER_IMAGE: "ghcr.io/osbuild/image-builder-cli:latest"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
@@ -76,43 +77,60 @@ jobs:
           IMAGE_TYPE: ${{ matrix.disk-type }}
         run: |
           set -eoux pipefail
-          CONFIG=$(if [ "${IMAGE_TYPE}" = "iso" ]; then echo "./disk_config/iso.toml"; else echo "./disk_config/disk.toml"; fi)
           PUBLISHED_IMAGE="${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}"
           sudo podman pull "${PUBLISHED_IMAGE}"
-          BUILD_IMAGE="${PUBLISHED_IMAGE}"
-          EXTRA_ARGS=()
+          sudo mkdir -p output
+
           if [ "${IMAGE_TYPE}" = "iso" ]; then
+            # Build installer environment (Anaconda Web UI) and produce a generic-iso.
+            INSTALLER_IMAGE="localhost/${IMAGE_NAME}-installer:latest"
             sudo podman build \
-              --build-arg "BASE_IMAGE=${PUBLISHED_IMAGE}" \
-              -t "localhost/${IMAGE_NAME}-iso-build:latest" \
-              -f ./disk_config/iso-build.Containerfile \
-              ./disk_config
-            BUILD_IMAGE="localhost/${IMAGE_NAME}-iso-build:latest"
-            EXTRA_ARGS+=(--installer-payload-ref "${PUBLISHED_IMAGE}")
-            sudo podman run --rm "${BUILD_IMAGE}" bash -c \
-              'source /etc/os-release; key="/usr/share/pki/rpm-gpg/RPM-GPG-KEY-${VERSION_ID}-fedora"; test -f "$key" || { echo "Missing Fedora GPG key for ISO depsolve: $key" >&2; exit 1; }'
+              --build-arg "PAYLOAD_SOURCE=containers-storage:${PUBLISHED_IMAGE}" \
+              --build-arg "PAYLOAD_TARGET=${PUBLISHED_IMAGE}" \
+              -t "${INSTALLER_IMAGE}" \
+              -f ./disk_config/installer/Containerfile \
+              ./disk_config/installer
+
+            sudo podman run \
+              --rm \
+              -i \
+              --privileged \
+              --pull=newer \
+              --net=host \
+              --security-opt label=type:unconfined_t \
+              -v "$PWD/output:/output" \
+              -v /var/lib/containers/storage:/var/lib/containers/storage \
+              "${IMAGE_BUILDER_IMAGE}" \
+              build \
+              --output-dir /output \
+              --bootc-ref "${INSTALLER_IMAGE}" \
+              --bootc-installer-payload-ref "${PUBLISHED_IMAGE}" \
+              --bootc-default-fs btrfs \
+              generic-iso
+          else
+            CONFIG="./disk_config/disk.toml"
+            sudo mkdir -p rpm-gpg
+            sudo podman run --rm -v ./rpm-gpg:/out:Z "${PUBLISHED_IMAGE}" \
+              bash -c 'cp -aL /etc/pki/rpm-gpg/. /out/ 2>/dev/null || true; cp -aL /usr/share/pki/rpm-gpg/. /out/ 2>/dev/null || true'
+            sudo podman run \
+              --rm \
+              -i \
+              --privileged \
+              --pull=newer \
+              --net=host \
+              --security-opt label=type:unconfined_t \
+              -v ./rpm-gpg:/etc/pki/rpm-gpg:ro,Z \
+              -v ./rpm-gpg:/usr/share/pki/rpm-gpg:ro,Z \
+              -v "$PWD/$CONFIG:/config.toml:ro" \
+              -v "$PWD/output:/output" \
+              -v /var/lib/containers/storage:/var/lib/containers/storage \
+              "${BIB_IMAGE}" \
+              --type "${IMAGE_TYPE}" \
+              --rootfs btrfs \
+              --use-librepo=True \
+              "${PUBLISHED_IMAGE}"
           fi
-          sudo mkdir -p output rpm-gpg
-          sudo podman run --rm -v ./rpm-gpg:/out:Z "${BUILD_IMAGE}" \
-            bash -c 'cp -aL /etc/pki/rpm-gpg/. /out/ 2>/dev/null || true; cp -aL /usr/share/pki/rpm-gpg/. /out/ 2>/dev/null || true'
-          sudo podman run \
-            --rm \
-            -i \
-            --privileged \
-            --pull=newer \
-            --net=host \
-            --security-opt label=type:unconfined_t \
-            -v ./rpm-gpg:/etc/pki/rpm-gpg:ro,Z \
-            -v ./rpm-gpg:/usr/share/pki/rpm-gpg:ro,Z \
-            -v "$PWD/$CONFIG:/config.toml:ro" \
-            -v "$PWD/output:/output" \
-            -v /var/lib/containers/storage:/var/lib/containers/storage \
-            "${BIB_IMAGE}" \
-            --type "${IMAGE_TYPE}" \
-            --rootfs btrfs \
-            --use-librepo=True \
-            ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"} \
-            "${BUILD_IMAGE}"
+
           sudo chown -R "${USER_UID}:${USER_GID}" output
           (cd output && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
           echo "output-directory=$(realpath output)" >> "${GITHUB_OUTPUT}"

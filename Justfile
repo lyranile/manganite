@@ -8,6 +8,7 @@ export image_keywords := env("IMAGE_KEYWORDS")
 export image_logo_url := env("IMAGE_LOGO_URL")
 export default_tag := env("DEFAULT_TAG")
 export bib_image := env("BIB_IMAGE")
+export image_builder_image := env("IMAGE_BUILDER_IMAGE", "ghcr.io/osbuild/image-builder-cli:latest")
 
 export PODMAN := "podman"
 export BUILDAH := "buildah"
@@ -264,26 +265,23 @@ _rootful_load_image $target_image=image_name $tag=default_tag:
         just sudoif podman pull "${target_image}:${tag}"
     fi
 
-# Build a bootable disk image from the container image via Bootc Image Builder (BIB)
+# Build a bootable disk image from the container image.
 _build-bib $target_image $tag $type $config: (_rootful_load_image target_image tag)
     #!/usr/bin/env bash
     set -euo pipefail
 
     BUILDTMP=$(mktemp -p "${PWD}" -d -t _build-bib.XXXXXXXXXX)
-    GPGDIR=$(mktemp -d "${PWD}/_build-bib-gpg.XXXXXXXXXX")
-    trap 'rm -rf "${GPGDIR}"' EXIT
-    sudo podman run --rm \
-      -v "${GPGDIR}":/out:Z \
-      "${target_image}:${tag}" \
-      bash -c 'cp -aL /etc/pki/rpm-gpg/. /out/ 2>/dev/null || true; cp -aL /usr/share/pki/rpm-gpg/. /out/ 2>/dev/null || true'
 
     if [[ "${type}" == "iso" ]]; then
-      ISO_IMAGE="localhost/$(basename "${target_image}")-iso-build:latest"
+      INSTALLER_IMAGE="localhost/$(basename "${target_image}")-installer:latest"
+      PAYLOAD_IMAGE="${target_image}:${tag}"
+
       sudo podman build \
-        --build-arg "BASE_IMAGE=${target_image}:${tag}" \
-        -t "${ISO_IMAGE}" \
-        -f "$(pwd)/disk_config/iso-build.Containerfile" \
-        "$(pwd)/disk_config"
+        --build-arg "PAYLOAD_SOURCE=containers-storage:${PAYLOAD_IMAGE}" \
+        --build-arg "PAYLOAD_TARGET=${PAYLOAD_IMAGE}" \
+        -t "${INSTALLER_IMAGE}" \
+        -f "$(pwd)/disk_config/installer/Containerfile" \
+        "$(pwd)/disk_config/installer"
 
       sudo podman run \
         --rm \
@@ -292,17 +290,23 @@ _build-bib $target_image $tag $type $config: (_rootful_load_image target_image t
         --pull=newer \
         --net=host \
         --security-opt label=type:unconfined_t \
-        -v "${GPGDIR}":/etc/pki/rpm-gpg:ro,Z \
-        -v "${GPGDIR}":/usr/share/pki/rpm-gpg:ro,Z \
-        -v "$(pwd)/${config}":/config.toml:ro \
         -v "${BUILDTMP}":/output \
         -v /var/lib/containers/storage:/var/lib/containers/storage \
-        "${bib_image}" \
-        --type iso \
-        --rootfs btrfs \
-        --use-librepo=True \
-        "${ISO_IMAGE}"
+        "${image_builder_image}" \
+        build \
+        --output-dir /output \
+        --bootc-ref "${INSTALLER_IMAGE}" \
+        --bootc-installer-payload-ref "${PAYLOAD_IMAGE}" \
+        --bootc-default-fs btrfs \
+        generic-iso
     else
+      GPGDIR=$(mktemp -d "${PWD}/_build-bib-gpg.XXXXXXXXXX")
+      trap 'rm -rf "${GPGDIR}"' EXIT
+      sudo podman run --rm \
+        -v "${GPGDIR}":/out:Z \
+        "${target_image}:${tag}" \
+        bash -c 'cp -aL /etc/pki/rpm-gpg/. /out/ 2>/dev/null || true; cp -aL /usr/share/pki/rpm-gpg/. /out/ 2>/dev/null || true'
+
       args="--type ${type} "
       args+="--use-librepo=True "
       args+="--rootfs=btrfs"
@@ -341,9 +345,10 @@ build-qcow2 $target_image=("localhost/" + image_name) $tag=default_tag: && (_bui
 [group('Build Virtual Machine Image')]
 build-raw $target_image=("localhost/" + image_name) $tag=default_tag: && (_build-bib target_image tag "raw" "disk_config/disk.toml")
 
-# Build an installer ISO (bootc generic-iso) via Bootc Image Builder
+# Build an installer ISO (Anaconda Web UI, generic-iso) via osbuild image-builder.
+# The payload ref embedded in the installer defaults to target_image:tag (see _build-bib).
 [group('Build Virtual Machine Image')]
-build-installer-iso $target_image=("localhost/" + image_name) $tag=default_tag: && (_build-bib target_image tag "iso" "disk_config/iso.toml")
+build-installer-iso $target_image=("localhost/" + image_name) $tag=default_tag: && (_build-bib target_image tag "iso" "disk_config/installer/iso.yaml")
 
 # Rebuild a QCOW2 virtual machine image
 [group('Build Virtual Machine Image')]

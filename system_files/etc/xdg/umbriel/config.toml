@@ -27,6 +27,8 @@ honor_restored_maximize = false
 WLR_RENDERER = "gles2"
 QT_QPA_PLATFORM = "wayland"
 ELECTRON_OZONE_PLATFORM_HINT = "auto"
+XCURSOR_THEME = "Bibata-Modern-Ice"
+XCURSOR_SIZE = "24"
 
 # Lid events
 # Remove the laptop panel from the desktop while the lid is closed, then

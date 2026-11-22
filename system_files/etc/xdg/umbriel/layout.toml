@@ -43,6 +43,10 @@ default_extent_fraction = 1.0
 blur = true
 
 [[window_rule]]
+match.app_id = "^dev.noctalia\\."
+title_bar_buttons = ["minimize", "maximize", "close"]
+
+[[window_rule]]
 match.app_id = "^dev.noctalia.Noctalia$"
 default_floating = true
 default_floating_size_px = { width = 1020, height = 900 }

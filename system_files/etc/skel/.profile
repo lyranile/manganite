@@ -5,8 +5,13 @@ export PATH="$HOME/.local/bin:$HOME/bin:/usr/bin:/run/host/usr/bin"
 export XDG_CONFIG_HOME="$HOME/.config"
 
 # Brew config
-if [ -r "${BREW_PREFIX}/bin/brew" ]; then
-	eval "$("${BREW_PREFIX}/bin/brew" shellenv)"
+if [ -z "${HOMEBREW_PREFIX:-}" ] && [ -d "${BREW_PREFIX}" ] && [ -x "${BREW_PREFIX}/bin/brew" ]; then
+	eval "$("${BREW_PREFIX}/bin/brew" shellenv | grep -Ev '\bPATH=')" || true
+	export HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-${BREW_PREFIX}}"
+	case ":${PATH}:" in
+		*":${BREW_PREFIX}/bin:"*) ;;
+		*) export PATH="${PATH}:${BREW_PREFIX}/bin:${BREW_PREFIX}/sbin" ;;
+	esac
 fi
 
 # Shell name
@@ -33,13 +38,13 @@ fi
 
 # Zoxide aliases
 if [ "$(command -v zoxide)" ]; then
-	eval "$(zoxide init "${SHELL}")"
+	eval "$(zoxide init "${SHELL_NAME}")"
 	alias cd="z"
 fi
 
 # Picker aliases
 if [ "$(command -v fzf)" ]; then
-	eval "$(fzf --"${SHELL}")"
+	eval "$(fzf --"${SHELL_NAME}")"
 fi
 
 # Cat aliases
@@ -101,8 +106,8 @@ fi
 
 # UV aliases
 if [ "$(command -v uv)" ]; then
-	eval '$(uv generate-shell-completion ${SHELL})'
-	eval '$(uvx --generate-shell-completion $SHELL)'
+	eval "$(uv generate-shell-completion "${SHELL_NAME}")"
+	eval "$(uvx --generate-shell-completion "${SHELL_NAME}")"
 fi
 
 if [ "$(command -v flatpak)" ]; then

@@ -3,12 +3,13 @@ radius = 3
 
 # Optional title bar with modifier-free dragging and floating frame resizing.
 [appearance.title_bar]
-mode = "forced"  # Always show title bars with buttons.
+mode = "forced"  # Always show title bars.
 # Use "forced" to always show bars, or "off" to hide them. Window rules can override this.
 height = 32
 font = "sans 12"
 button_position = "right"  # or "left"
-buttons = ["minimize", "maximize", "close"]  # From the title outward; omit to hide.
+buttons = []  # Default: no window control buttons; window rules opt in per app.
+button_glyph = "always"  # Show button glyphs at all times (no hover fade-in).
 button_size = 16
 button_gap = 6
 button_padding = 8

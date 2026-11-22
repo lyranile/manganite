@@ -16,6 +16,7 @@ PACKAGES=(
 	greetd
 	i2c-tools
 	luciole
+	micro
 	nautilus
 	nautilus-extensions
 	noctalia

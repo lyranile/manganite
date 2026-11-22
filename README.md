@@ -6,8 +6,8 @@
   <img alt="Manganite" src="https://raw.githubusercontent.com/lyranile/manganite/main/system_files/usr/share/icons/hicolor/scalable/apps/manganite.svg" width="128">
 </picture>
 
-[![Build](https://github.com/lyranile/manganite/actions/workflows/build.yaml/badge.svg)](https://github.com/lyranile/manganite/actions/workflows/build.yaml)
-[![Lint](https://github.com/lyranile/manganite/actions/workflows/lint.yaml/badge.svg)](https://github.com/lyranile/manganite/actions/workflows/lint.yaml)
+[![Build](https://github.com/lyranile/manganite/actions/workflows/build.yml/badge.svg)](https://github.com/lyranile/manganite/actions/workflows/build.yml)
+[![Lint](https://github.com/lyranile/manganite/actions/workflows/lint.yml/badge.svg)](https://github.com/lyranile/manganite/actions/workflows/lint.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 **Manganite** is a minimal, cloud-native desktop operating system built on the [Universal Blue](https://universal-blue.org/) `base-main` image. It layers the [Umbriel](https://noctalia.dev/umbriel) Wayland compositor (nightly, from Terra) and the [Noctalia](https://noctalia.dev/) shell on top of a desktop-free Fedora base, giving you a tiling, keyboard-driven desktop with near-zero maintenance.
@@ -30,7 +30,7 @@ Manganite's mission is to provide a small, reliable, and hackable desktop operat
 
 ### Installation
 
-The easiest way to try Manganite is to install from a disk image produced by the [`build-disk.yaml`](./.github/workflows/build-disk.yaml) workflow. Trigger that workflow (or download the artifact from the latest run) to get an installer ISO, then boot it and follow the installer. The installer switches the target system to `ghcr.io/lyranile/manganite:latest` in place.
+The easiest way to try Manganite is to install from a disk image produced by the [`build-disk.yml`](./.github/workflows/build-disk.yml) workflow. Trigger that workflow (or download the artifact from the latest run) to get an installer ISO, then boot it and follow the installer. The installer switches the target system to `ghcr.io/lyranile/manganite:latest` in place.
 
 > **Note:** A hosted ISO download link and a project website are not published yet. See [Information needed](#information-needed) below.
 
@@ -194,13 +194,13 @@ All incorporated components maintain their respective licenses and attributions.
 
 The following are not yet available and are needed to finish the public-facing documentation. Please provide them and I'll wire them in:
 
-- **ISO download link** — a hosted URL for the installer ISO produced by `build-disk.yaml` (or confirmation to use GitHub Actions artifacts only).
+- **ISO download link** — a hosted URL for the installer ISO produced by `build-disk.yml` (or confirmation to use GitHub Actions artifacts only).
 - **Project website** — if one exists (e.g. `getmanganite.dev`), for an install/scene picker like Aurora/Bluefin.
 - **Screenshots / hero image** — a desktop screenshot for the README and docs.
 - **Cosign public key hosting** — confirmation that `cosign.pub` stays in-repo (already present) is sufficient.
 - **Supported architectures** — amd64 only, or arm64 too (the disk workflow already supports both).
 - **Release channels** — whether `latest` is the only tag, or `stable`/dated tags should be documented.
-- **ArtifactHub repository ID** — to finish [`artifacthub-repo.yaml`](./artifacthub-repo.yaml).
+- **ArtifactHub repository ID** — to finish [`artifacthub-repo.yml`](./artifacthub-repo.yml).
 - **Contact / maintainer info** — for the README and Code of Conduct.
 - **Noctalia/Umbriel upstream links** — canonical docs URLs for the compositor and shell.
 

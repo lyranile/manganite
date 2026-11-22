@@ -58,6 +58,22 @@ IsRuntime=false
 Branch=stable
 IsRuntime=false
 
+[Flatpak Preinstall org.gtk.Gtk3theme.Adwaita-dark]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall org.gtk.Gtk3theme.Adwaita]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall org.gtk.Gtk4theme.Adwaita-dark]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall org.gtk.Gtk4theme.Adwaita]
+Branch=stable
+IsRuntime=false
+
 [Flatpak Preinstall org.gtk.Gtk3theme.adw-gtk3-dark]
 Branch=stable
 IsRuntime=false

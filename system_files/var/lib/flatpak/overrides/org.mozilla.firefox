@@ -4,3 +4,4 @@ devices=dri;all
 [Environment]
 MOZ_DISABLE_RDD_SANDBOX=1
 LIBVA_DRI3_ENABLE=1
+GTK_THEME=Adwaita-dark

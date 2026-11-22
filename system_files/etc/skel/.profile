@@ -16,6 +16,7 @@ fi
 
 # Shell name
 SHELL=$(cat /proc/$$/comm)
+SHELL_NAME="${SHELL##*/}"
 
 # Starship aliases
 if [ "$(command -v starship)" ]; then

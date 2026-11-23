@@ -2,11 +2,12 @@
 Description=Install default Homebrew bundle
 Wants=brew-setup.service
 After=brew-setup.service network-online.target
-Before=greetd.service
 ConditionPathExists=/usr/share/ublue-os/Brewfile
+ConditionPathExists=/home/linuxbrew/.linuxbrew/bin/brew
 
 [Service]
 Type=oneshot
+ExecCondition=/usr/bin/id 1000
 User=1000
 Environment=HOMEBREW_CELLAR=/home/linuxbrew/.linuxbrew/Cellar
 Environment=HOMEBREW_PREFIX=/home/linuxbrew/.linuxbrew

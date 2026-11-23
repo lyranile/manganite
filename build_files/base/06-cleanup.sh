@@ -14,5 +14,7 @@ dnf5 clean all || true
 glib-compile-schemas /usr/share/glib-2.0/schemas/ 2>/dev/null || true
 gtk-update-icon-cache -f /usr/share/icons/hicolor 2>/dev/null || true
 gtk-update-icon-cache -f /usr/share/icons/Papirus 2>/dev/null || true
+gtk-update-icon-cache -f /usr/share/icons/Papirus-Dark 2>/dev/null || true
+gtk-update-icon-cache -f /usr/share/icons/Adwaita 2>/dev/null || true
 
 echo "::endgroup::"

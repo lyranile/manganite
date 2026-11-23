@@ -2,6 +2,10 @@
 Branch=stable
 IsRuntime=false
 
+[Flatpak Preinstall dev.zed.Zed]
+Branch=stable
+IsRuntime=false
+
 [Flatpak Preinstall io.github.kolunmi.Bazaar]
 Branch=stable
 IsRuntime=false
@@ -54,7 +58,19 @@ IsRuntime=false
 Branch=stable
 IsRuntime=false
 
-[Flatpak Preinstall org.gnome.World.Iotas]
+[Flatpak Preinstall org.gtk.Gtk3theme.Adwaita-dark]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall org.gtk.Gtk3theme.Adwaita]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall org.gtk.Gtk4theme.Adwaita-dark]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall org.gtk.Gtk4theme.Adwaita]
 Branch=stable
 IsRuntime=false
 

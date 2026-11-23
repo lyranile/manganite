@@ -16,6 +16,7 @@ PACKAGES=(
 	greetd
 	i2c-tools
 	luciole
+	micro
 	nautilus
 	nautilus-extensions
 	noctalia
@@ -23,6 +24,7 @@ PACKAGES=(
 	os-prober
 	papers-nautilus
 	papirus-icon-theme
+	adwaita-icon-theme
 	plymouth
 	podman
 	polkit

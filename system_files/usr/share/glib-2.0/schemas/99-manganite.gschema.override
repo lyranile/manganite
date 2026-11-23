@@ -1,0 +1,7 @@
+[org.gnome.desktop.wm.preferences]
+button-layout=':'
+
+[org.gnome.desktop.interface]
+icon-theme='Papirus-Dark'
+cursor-theme='Bibata-Modern-Ice'
+cursor-size=24

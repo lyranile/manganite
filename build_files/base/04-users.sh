@@ -17,4 +17,14 @@ if [ -f /etc/default/useradd ]; then
 	grep -q '^SHELL=' /etc/default/useradd || echo 'SHELL=/usr/bin/zsh' >>/etc/default/useradd
 fi
 
+while IFS=: read -r name _ uid _ _ _ shell; do
+	case "$shell" in
+		/bin/sh|/bin/bash|/usr/bin/sh|/usr/bin/bash)
+			if [ "$uid" -ge 1000 ] || [ "$name" = "root" ]; then
+				usermod -s /usr/bin/zsh "$name"
+			fi
+			;;
+	esac
+done < /etc/passwd
+
 echo "::endgroup::"

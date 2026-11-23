@@ -15,13 +15,12 @@ if [ -z "${HOMEBREW_PREFIX:-}" ] && [ -d "${BREW_PREFIX}" ] && [ -x "${BREW_PREF
 fi
 
 # Shell name
-SHELL=$(cat /proc/$$/comm)
-SHELL_NAME="${SHELL##*/}"
+SHELL_NAME="zsh"
 
 # Starship aliases
 if [ "$(command -v starship)" ]; then
-	eval "$(starship init "${SHELL}")"
-	eval "$(starship completions "${SHELL}")"
+	eval "$(starship init "$SHELL_NAME")"
+	eval "$(starship completions "$SHELL_NAME")"
 fi
 
 # Editor aliases
@@ -38,14 +37,14 @@ if [ "$(command -v eza)" ]; then
 fi
 
 # Zoxide aliases
-if [ "$(command -v zoxide)" ]; then
-	eval "$(zoxide init "${SHELL_NAME}")"
+if [ -n "$SHELL_NAME" ] && [ "$(command -v zoxide)" ]; then
+	eval "$(zoxide init "$SHELL_NAME")"
 	alias cd="z"
 fi
 
 # Picker aliases
-if [ "$(command -v fzf)" ]; then
-	eval "$(fzf --"${SHELL_NAME}")"
+if [ -n "$SHELL_NAME" ] && [ "$(command -v fzf)" ]; then
+	eval "$(fzf --"$SHELL_NAME")"
 fi
 
 # Cat aliases
@@ -106,9 +105,9 @@ if [ "$(command -v flatpak)" ]; then
 fi
 
 # UV aliases
-if [ "$(command -v uv)" ]; then
-	eval "$(uv generate-shell-completion "${SHELL_NAME}")"
-	eval "$(uvx --generate-shell-completion "${SHELL_NAME}")"
+if [ -n "$SHELL_NAME" ] && [ "$(command -v uv)" ]; then
+	eval "$(uv generate-shell-completion "$SHELL_NAME")"
+	eval "$(uvx --generate-shell-completion "$SHELL_NAME")"
 fi
 
 if [ "$(command -v flatpak)" ]; then

@@ -19,6 +19,5 @@ systemctl --global preset-all
 systemctl enable flatpak-nuke-fedora.service flatpak-preinstall.service rpm-ostreed-automatic.timer 2>/dev/null || true
 systemctl --global enable flatpak-user-update.timer bazaar.service ublue-user-setup.service 2>/dev/null || true
 systemctl mask systemd-remount-fs.service 2>/dev/null || true
-flatpak preinstall -y --noninteractive
 
 echo "::endgroup::"
